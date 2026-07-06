@@ -23,7 +23,7 @@ This index provides navigation for all Atlas documentation. Every document is a 
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| [System Architecture](../architecture/overview/ARCHITECTURE.md) | Complete system architecture | ✅ Complete |
+| [System Architecture](../architecture/overview/ARCHITECTURE_V2.0.md) | Complete system architecture V2.0 | ✅ Complete |
 | [Technology Stack](../architecture/overview/TECHNOLOGY_STACK.md) | Technology decisions | ✅ Complete |
 | [Monorepo Structure](../architecture/overview/MONOREPO_STRUCTURE.md) | Repository organization | ✅ Complete |
 | [Engines Overview](../architecture/engines/ENGINES_OVERVIEW.md) | All 15 Atlas engines | ✅ Complete |
