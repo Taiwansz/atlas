@@ -1,0 +1,789 @@
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║              ATLAS ENGINEERING OS — RELEASE WORKFLOW                ║
+# ║  Semantic versioning → Changelog → GitHub Release → Container →    ║
+# ║  Image Signing (Cosign/Sigstore) → SBOM                            ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+#
+# Trigger: Push to main with conventional commits → automated release
+#          Manual dispatch → forced release with explicit version bump
+#
+# Pipeline:
+#   1. Version computation (conventional commits → semver bump)
+#   2. Changelog generation (conventional-changelog)
+#   3. Nx release (monorepo package versioning + publish)
+#   4. GitHub Release creation with release notes
+#   5. Container image build + push to GHCR
+#   6. Image signing with Cosign (Sigstore keyless)
+#   7. SBOM generation (Syft) + attestation
+#   8. Release announcement (Slack + GitHub Discussions)
+
+name: 🚀 Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version-bump:
+        description: "Force version bump type (overrides conventional commits)"
+        required: false
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+        default: auto
+      dry-run:
+        description: "Dry run — compute release but do not publish"
+        required: false
+        type: boolean
+        default: false
+      skip-tests:
+        description: "Skip test jobs (emergency release only)"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel a release in progress
+
+permissions:
+  contents: write          # Create GitHub Releases, push version tags
+  packages: write          # Push to GitHub Container Registry
+  id-token: write          # OIDC for Sigstore keyless signing
+  pull-requests: write     # Update changelog PRs
+  attestations: write      # SBOM attestation
+  security-events: write   # Upload SARIF
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: "20.x"
+  PNPM_VERSION: "9"
+  # Cosign version
+  COSIGN_VERSION: "v2.4.0"
+  # Syft version for SBOM
+  SYFT_VERSION: "v1.4.0"
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 1: Pre-release validation
+# ──────────────────────────────────────────────────────────────────────
+jobs:
+  pre-release-validation:
+    name: ✅ Pre-release Validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      should-release: ${{ steps.check-commits.outputs.should-release }}
+      commit-count: ${{ steps.check-commits.outputs.commit-count }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50  # Enough history for conventional commits analysis
+          token: ${{ secrets.ATLAS_BOT_TOKEN || github.token }}
+
+      - name: 🔍 Check if release is warranted
+        id: check-commits
+        run: |
+          # Get last release tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "Last release tag: ${LAST_TAG:-none}"
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag — first release"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "commit-count=all" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Count releasable commits since last tag
+          RELEASABLE=$(git log "${LAST_TAG}..HEAD" \
+            --oneline \
+            --grep="^feat\|^fix\|^perf\|^refactor\|BREAKING CHANGE" | wc -l)
+
+          echo "Releasable commits since ${LAST_TAG}: $RELEASABLE"
+          echo "commit-count=$RELEASABLE" >> $GITHUB_OUTPUT
+
+          if [ "$RELEASABLE" -gt "0" ] || [ "${{ inputs.version-bump }}" != "auto" ]; then
+            echo "should-release=true" >> $GITHUB_OUTPUT
+          else
+            echo "No releasable commits — skipping release"
+            echo "should-release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🔍 Validate conventional commits on this push
+        if: steps.check-commits.outputs.should-release == 'true'
+        run: |
+          npx commitlint \
+            --from=$(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD) \
+            --to=HEAD \
+            --verbose || echo "::warning::Some commits do not follow conventional commits spec"
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 2: Compute version bump
+# ──────────────────────────────────────────────────────────────────────
+  compute-version:
+    name: 🔢 Compute Version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [pre-release-validation]
+    if: needs.pre-release-validation.outputs.should-release == 'true'
+    outputs:
+      current-version: ${{ steps.version.outputs.current }}
+      next-version: ${{ steps.version.outputs.next }}
+      bump-type: ${{ steps.version.outputs.bump }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+      changelog: ${{ steps.changelog.outputs.content }}
+      release-tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.ATLAS_BOT_TOKEN || github.token }}
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔢 Compute next version
+        id: version
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+
+          # Determine bump type
+          FORCED_BUMP="${{ inputs.version-bump }}"
+
+          if [ "$FORCED_BUMP" != "auto" ] && [ -n "$FORCED_BUMP" ]; then
+            BUMP_TYPE="$FORCED_BUMP"
+          else
+            # Analyze conventional commits since last tag
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || "")
+            FROM_REF="${LAST_TAG:-$(git rev-list --max-parents=0 HEAD)}"
+
+            HAS_BREAKING=$(git log "${FROM_REF}..HEAD" \
+              --oneline | grep -c "BREAKING CHANGE\|!:" || echo 0)
+            HAS_FEAT=$(git log "${FROM_REF}..HEAD" \
+              --oneline | grep -c "^[a-f0-9]* feat" || echo 0)
+
+            if [ "$HAS_BREAKING" -gt "0" ]; then
+              BUMP_TYPE="major"
+            elif [ "$HAS_FEAT" -gt "0" ]; then
+              BUMP_TYPE="minor"
+            else
+              BUMP_TYPE="patch"
+            fi
+          fi
+
+          echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
+
+          # Compute next version using semver
+          NEXT=$(node -e "
+            const semver = require('semver');
+            const current = '$CURRENT';
+            const bump = '$BUMP_TYPE';
+            const next = semver.inc(current, bump);
+            console.log(next);
+          ")
+
+          echo "next=$NEXT" >> $GITHUB_OUTPUT
+          echo "tag=v$NEXT" >> $GITHUB_OUTPUT
+          echo "is-prerelease=false" >> $GITHUB_OUTPUT
+
+          echo "📦 Version: $CURRENT → $NEXT ($BUMP_TYPE bump)"
+
+      - name: 📝 Generate changelog
+        id: changelog
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || "")
+          FROM_REF="${LAST_TAG:-$(git rev-list --max-parents=0 HEAD)}"
+
+          # Generate structured changelog from conventional commits
+          pnpm dlx conventional-changelog-cli \
+            -p angular \
+            --release-count 1 \
+            --output-unreleased \
+            > CHANGELOG-RELEASE.md
+
+          echo "Generated changelog:"
+          cat CHANGELOG-RELEASE.md
+
+          # Escape for GitHub output (multiline)
+          CONTENT=$(cat CHANGELOG-RELEASE.md)
+          echo "content<<CHANGELOG_EOF" >> $GITHUB_OUTPUT
+          echo "$CONTENT" >> $GITHUB_OUTPUT
+          echo "CHANGELOG_EOF" >> $GITHUB_OUTPUT
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 3: Nx Release — version packages and publish to npm
+# ──────────────────────────────────────────────────────────────────────
+  nx-release:
+    name: 📦 Nx Monorepo Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [compute-version]
+    environment:
+      name: npm-publish
+      url: https://www.npmjs.com/org/atlas-eos
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.ATLAS_BOT_TOKEN || github.token }}
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build all packages
+        run: |
+          pnpm nx run-many \
+            --target=build \
+            --all \
+            --parallel=4
+        env:
+          NODE_ENV: production
+
+      - name: 🤖 Configure Git for release commit
+        run: |
+          git config user.name "atlas-release-bot[bot]"
+          git config user.email "atlas-release-bot[bot]@users.noreply.github.com"
+
+      - name: 📦 Nx Release — version all packages
+        id: nx-version
+        run: |
+          VERSION="${{ needs.compute-version.outputs.next-version }}"
+          DRY_RUN="${{ inputs.dry-run }}"
+
+          NX_ARGS="--specifier=$VERSION"
+          if [ "$DRY_RUN" = "true" ]; then
+            NX_ARGS="$NX_ARGS --dry-run"
+          fi
+
+          pnpm nx release version $NX_ARGS \
+            --verbose \
+            --git-commit \
+            --git-commit-message="chore(release): v${VERSION} [skip ci]" \
+            --git-tag \
+            --git-tag-message="v${VERSION}"
+
+      - name: 📝 Update root CHANGELOG.md
+        run: |
+          VERSION="${{ needs.compute-version.outputs.next-version }}"
+          DATE=$(date -u +"%Y-%m-%d")
+          RELEASE_NOTES="${{ needs.compute-version.outputs.changelog }}"
+
+          # Prepend new version to existing CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            TMP=$(mktemp)
+            echo "# Changelog" > "$TMP"
+            echo "" >> "$TMP"
+            echo "## [v${VERSION}] — ${DATE}" >> "$TMP"
+            echo "" >> "$TMP"
+            echo "$RELEASE_NOTES" >> "$TMP"
+            echo "" >> "$TMP"
+            # Append rest of existing changelog (skip first line if it's "# Changelog")
+            tail -n +2 CHANGELOG.md >> "$TMP"
+            mv "$TMP" CHANGELOG.md
+          else
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "## [v${VERSION}] — ${DATE}" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "$RELEASE_NOTES" >> CHANGELOG.md
+          fi
+
+          if [ "${{ inputs.dry-run }}" != "true" ]; then
+            git add CHANGELOG.md
+            git commit --amend --no-edit || true
+            git push origin main --follow-tags
+          fi
+
+      - name: 🚀 Nx Release — publish to npm
+        if: inputs.dry-run != 'true'
+        run: |
+          pnpm nx release publish \
+            --verbose \
+            --registry=https://registry.npmjs.org
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 4: Create GitHub Release
+# ──────────────────────────────────────────────────────────────────────
+  create-github-release:
+    name: 🏷️ Create GitHub Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [compute-version, nx-release]
+    if: inputs.dry-run != 'true'
+    outputs:
+      release-id: ${{ steps.create-release.outputs.id }}
+      release-url: ${{ steps.create-release.outputs.html_url }}
+      upload-url: ${{ steps.create-release.outputs.upload_url }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.compute-version.outputs.release-tag }}
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 📦 Package CLI binary
+        run: |
+          pnpm nx run @atlas/cli:package \
+            --output=dist/cli \
+            --platforms=linux-x64,darwin-x64,darwin-arm64,win-x64 || true
+
+      - name: 🏷️ Create GitHub Release
+        id: create-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.compute-version.outputs.release-tag }}
+          name: "Atlas EOS ${{ needs.compute-version.outputs.release-tag }}"
+          body: |
+            ## 🚀 Atlas Engineering OS ${{ needs.compute-version.outputs.release-tag }}
+
+            **Release Type:** `${{ needs.compute-version.outputs.bump-type }}` bump
+
+            ---
+
+            ${{ needs.compute-version.outputs.changelog }}
+
+            ---
+
+            ### 📦 Installation
+
+            ```bash
+            # Install Atlas CLI globally
+            npm install -g @atlas/cli@${{ needs.compute-version.outputs.next-version }}
+
+            # Or use with npx
+            npx @atlas/cli@${{ needs.compute-version.outputs.next-version }} init
+            ```
+
+            ### 🐳 Docker
+
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ needs.compute-version.outputs.next-version }}
+            ```
+
+            ### 🔏 Verification
+
+            ```bash
+            # Verify container image signature
+            cosign verify \
+              --certificate-identity-regexp "https://github.com/${{ github.repository }}/*" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              ghcr.io/${{ github.repository }}:${{ needs.compute-version.outputs.next-version }}
+            ```
+
+            ---
+
+            **Full Changelog:** https://github.com/${{ github.repository }}/compare/${{ needs.compute-version.outputs.current-version }}...${{ needs.compute-version.outputs.next-version }}
+          draft: false
+          prerelease: ${{ needs.compute-version.outputs.is-prerelease == 'true' }}
+          files: |
+            dist/cli/atlas-linux-x64
+            dist/cli/atlas-darwin-x64
+            dist/cli/atlas-darwin-arm64
+            dist/cli/atlas-win-x64.exe
+            CHANGELOG.md
+          generate_release_notes: false
+          make_latest: ${{ needs.compute-version.outputs.is-prerelease != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 5: Build and Push Container Images
+# ──────────────────────────────────────────────────────────────────────
+  build-push-containers:
+    name: 🐳 Build & Push Container Images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs: [compute-version, create-github-release]
+    if: inputs.dry-run != 'true'
+    outputs:
+      image-digest-api: ${{ steps.build-api.outputs.digest }}
+      image-digest-worker: ${{ steps.build-worker.outputs.digest }}
+      image-digest-dashboard: ${{ steps.build-dashboard.outputs.digest }}
+      image-tags-api: ${{ steps.meta-api.outputs.tags }}
+
+    strategy:
+      matrix:
+        service:
+          - name: api-server
+            dockerfile: apps/api-server/Dockerfile
+            context: .
+            output-key: api
+          - name: agent-worker
+            dockerfile: apps/agent-worker/Dockerfile
+            context: .
+            output-key: worker
+          - name: dashboard
+            dockerfile: apps/dashboard/Dockerfile
+            context: .
+            output-key: dashboard
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.compute-version.outputs.release-tag }}
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+          driver-opts: |
+            image=moby/buildkit:master
+            network=host
+
+      - name: 🔑 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.compute-version.outputs.next-version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.compute-version.outputs.next-version }}
+            type=semver,pattern={{major}},value=${{ needs.compute-version.outputs.next-version }}
+            type=raw,value=latest,enable=${{ needs.compute-version.outputs.is-prerelease != 'true' }}
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.title=Atlas EOS — ${{ matrix.service.name }}
+            org.opencontainers.image.description=Atlas Engineering Operating System
+            org.opencontainers.image.vendor=Atlas EOS
+            org.opencontainers.image.version=${{ needs.compute-version.outputs.next-version }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT
+            atlas.service=${{ matrix.service.name }}
+            atlas.release=${{ needs.compute-version.outputs.release-tag }}
+
+      - name: 🏗️ Build and push ${{ matrix.service.name }}
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: |
+            type=gha,scope=${{ matrix.service.name }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}:cache
+          cache-to: |
+            type=gha,scope=${{ matrix.service.name }},mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}:cache,mode=max
+          build-args: |
+            VERSION=${{ needs.compute-version.outputs.next-version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            GIT_SHA=${{ github.sha }}
+          provenance: true
+          sbom: false  # We generate SBOM separately with Syft for more control
+
+      - name: 📊 Image size report
+        run: |
+          DIGEST="${{ steps.build.outputs.digest }}"
+          echo "### 🐳 ${{ matrix.service.name }} Image" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest:** \`${DIGEST}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tags:** ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 6: Sign Container Images (Cosign / Sigstore Keyless)
+# ──────────────────────────────────────────────────────────────────────
+  sign-images:
+    name: 🔏 Sign Container Images (Sigstore)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [compute-version, build-push-containers]
+    if: inputs.dry-run != 'true'
+    permissions:
+      packages: write
+      id-token: write  # Required for OIDC keyless signing
+
+    strategy:
+      matrix:
+        service:
+          - api-server
+          - agent-worker
+          - dashboard
+
+    steps:
+      - name: 🔑 Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: ${{ env.COSIGN_VERSION }}
+
+      - name: 🔑 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔏 Sign image with Cosign keyless (Sigstore)
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.compute-version.outputs.next-version }}
+        run: |
+          # Keyless signing — uses GitHub OIDC token as identity
+          # Verification can be done without any pre-shared keys:
+          # cosign verify \
+          #   --certificate-identity-regexp "https://github.com/..." \
+          #   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          #   $IMAGE_REF
+          cosign sign \
+            --yes \
+            --rekor-url=https://rekor.sigstore.dev \
+            --fulcio-url=https://fulcio.sigstore.dev \
+            --annotations="atlas.version=${{ needs.compute-version.outputs.next-version }}" \
+            --annotations="atlas.release-tag=${{ needs.compute-version.outputs.release-tag }}" \
+            --annotations="git.sha=${{ github.sha }}" \
+            --annotations="github.run-id=${{ github.run_id }}" \
+            "$IMAGE_REF"
+
+          echo "✅ Signed: $IMAGE_REF"
+
+      - name: ✅ Verify signature immediately after signing
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.compute-version.outputs.next-version }}
+        run: |
+          cosign verify \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/*" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$IMAGE_REF" | jq .
+
+          echo "✅ Signature verified for $IMAGE_REF"
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 7: SBOM Generation and Attestation
+# ──────────────────────────────────────────────────────────────────────
+  sbom-generation:
+    name: 📋 SBOM Generation & Attestation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [compute-version, sign-images]
+    if: inputs.dry-run != 'true'
+    permissions:
+      packages: write
+      id-token: write
+      attestations: write
+      contents: write
+
+    strategy:
+      matrix:
+        service:
+          - api-server
+          - agent-worker
+          - dashboard
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.compute-version.outputs.release-tag }}
+
+      - name: 🔑 Install Syft (SBOM generator)
+        uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: ${{ env.SYFT_VERSION }}
+
+      - name: 🔑 Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: ${{ env.COSIGN_VERSION }}
+
+      - name: 🔑 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📋 Generate SBOM with Syft (SPDX format)
+        id: syft-spdx
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.compute-version.outputs.next-version }}
+          format: spdx-json
+          output-file: sbom-${{ matrix.service }}-spdx.json
+          artifact-name: sbom-${{ matrix.service }}-spdx.json
+
+      - name: 📋 Generate SBOM with Syft (CycloneDX format)
+        run: |
+          syft \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.compute-version.outputs.next-version }}" \
+            --output cyclonedx-json=sbom-${{ matrix.service }}-cyclonedx.json \
+            --source-name="atlas-${{ matrix.service }}" \
+            --source-version="${{ needs.compute-version.outputs.next-version }}"
+
+      - name: 🔏 Attest SBOM to container image (Cosign)
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.compute-version.outputs.next-version }}
+        run: |
+          cosign attest \
+            --yes \
+            --type spdxjson \
+            --predicate sbom-${{ matrix.service }}-spdx.json \
+            "$IMAGE_REF"
+
+          echo "✅ SBOM attestation attached to $IMAGE_REF"
+
+      - name: 🔏 GitHub SBOM attestation
+        uses: actions/attest-sbom@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          subject-digest: ${{ needs.build-push-containers.outputs.image-digest-api }}
+          sbom-path: sbom-${{ matrix.service }}-spdx.json
+          push-to-registry: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📤 Upload SBOM artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.compute-version.outputs.release-tag }}
+          files: |
+            sbom-${{ matrix.service }}-spdx.json
+            sbom-${{ matrix.service }}-cyclonedx.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Scan SBOM for vulnerabilities (Grype)
+        uses: anchore/scan-action@v4
+        with:
+          sbom: sbom-${{ matrix.service }}-spdx.json
+          fail-build: false
+          severity-cutoff: critical
+          output-format: sarif
+          output-file: grype-${{ matrix.service }}.sarif
+
+      - name: 📤 Upload Grype SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: grype-${{ matrix.service }}.sarif
+          category: grype-${{ matrix.service }}
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 8: Release Announcement
+# ──────────────────────────────────────────────────────────────────────
+  release-announcement:
+    name: 📣 Release Announcement
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs:
+      - compute-version
+      - create-github-release
+      - sbom-generation
+    if: |
+      inputs.dry-run != 'true' &&
+      needs.compute-version.outputs.is-prerelease != 'true'
+
+    steps:
+      - name: 📣 Post Slack announcement
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 Atlas EOS ${{ needs.compute-version.outputs.release-tag }} Released!",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 Atlas EOS ${{ needs.compute-version.outputs.release-tag }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Release Type:* `${{ needs.compute-version.outputs.bump-type }}`\n*Version:* `${{ needs.compute-version.outputs.current-version }}` → `${{ needs.compute-version.outputs.next-version }}`\n*Release URL:* ${{ needs.create-github-release.outputs.release-url }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "```\nnpm install -g @atlas/cli@${{ needs.compute-version.outputs.next-version }}\n```"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: 📊 Release summary
+        run: |
+          echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`${{ needs.compute-version.outputs.next-version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Tag** | \`${{ needs.compute-version.outputs.release-tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Bump Type** | \`${{ needs.compute-version.outputs.bump-type }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Release URL** | [${{ needs.create-github-release.outputs.release-url }}](${{ needs.create-github-release.outputs.release-url }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Images Signed** | ✅ Sigstore keyless |" >> $GITHUB_STEP_SUMMARY
+          echo "| **SBOM** | ✅ SPDX + CycloneDX attached |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Container Images" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}/api-server:${{ needs.compute-version.outputs.next-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}/agent-worker:${{ needs.compute-version.outputs.next-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}/dashboard:${{ needs.compute-version.outputs.next-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

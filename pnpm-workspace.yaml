@@ -1,0 +1,11 @@
+packages:
+  # Applications
+  - "apps/*"
+  # Core packages (shared foundations)
+  - "packages/*"
+  # AI Engines (specialized intelligence modules)
+  - "engines/*"
+  # Integration connectors
+  - "integrations/*"
+  # Infrastructure tooling
+  - "infra/*"

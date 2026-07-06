@@ -1,0 +1,1072 @@
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║              ATLAS ENGINEERING OS — QUALITY GATE WORKFLOW           ║
+# ║  Every push is a gate. Every gate is a contract with the codebase. ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+#
+# This workflow implements the Atlas Quality Gate — a multi-stage
+# validation pipeline that enforces engineering standards before any
+# code reaches the main branch.
+#
+# Gate stages:
+#   1. Compute affected packages (Nx)
+#   2. Lint + type-check (affected)
+#   3. Unit tests + coverage (≥80%)
+#   4. Integration tests (affected)
+#   5. Security scanning (audit, Snyk, Trivy)
+#   6. Architecture boundary validation
+#   7. Documentation freshness
+#   8. Performance benchmarks (affected)
+#   9. Build verification (affected)
+#  10. Status report comment on PR
+#
+# Estimated total runtime: 8-14 minutes (parallelized)
+
+name: 🛡️ Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - "release/**"
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+# Cancel in-progress runs for the same branch/PR to save minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Minimal default permissions; individual jobs escalate as needed
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+
+env:
+  # Nx configuration
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  NX_BRANCH: ${{ github.head_ref || github.ref_name }}
+  NX_CI_EXECUTION_ENV: github
+  # Node/PNPM
+  NODE_VERSION: "20.x"
+  PNPM_VERSION: "9"
+  # Coverage thresholds
+  COVERAGE_THRESHOLD_LINES: 80
+  COVERAGE_THRESHOLD_BRANCHES: 75
+  COVERAGE_THRESHOLD_FUNCTIONS: 80
+  COVERAGE_THRESHOLD_STATEMENTS: 80
+  # Registry
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 1: Setup — Compute affected packages using Nx
+# ──────────────────────────────────────────────────────────────────────
+jobs:
+  setup:
+    name: 🔭 Compute Affected Packages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      affected-apps: ${{ steps.nx-affected.outputs.apps }}
+      affected-libs: ${{ steps.nx-affected.outputs.libs }}
+      affected-all: ${{ steps.nx-affected.outputs.all }}
+      has-affected: ${{ steps.nx-affected.outputs.has-affected }}
+      base-sha: ${{ steps.git-base.outputs.base }}
+      head-sha: ${{ steps.git-base.outputs.head }}
+      run-id: ${{ github.run_id }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for Nx affected computation
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏷️ Derive Git base/head SHAs
+        id: git-base
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE=$(git rev-parse HEAD~1)
+            HEAD=$(git rev-parse HEAD)
+          fi
+          echo "base=$BASE" >> $GITHUB_OUTPUT
+          echo "head=$HEAD" >> $GITHUB_OUTPUT
+          echo "Base: $BASE | Head: $HEAD"
+
+      - name: 🔭 Compute Nx affected projects
+        id: nx-affected
+        run: |
+          # Compute affected project names as JSON arrays
+          AFFECTED_APPS=$(pnpm nx show projects \
+            --affected \
+            --base=${{ steps.git-base.outputs.base }} \
+            --head=${{ steps.git-base.outputs.head }} \
+            --type=app \
+            --json 2>/dev/null || echo '[]')
+
+          AFFECTED_LIBS=$(pnpm nx show projects \
+            --affected \
+            --base=${{ steps.git-base.outputs.base }} \
+            --head=${{ steps.git-base.outputs.head }} \
+            --type=lib \
+            --json 2>/dev/null || echo '[]')
+
+          AFFECTED_ALL=$(pnpm nx show projects \
+            --affected \
+            --base=${{ steps.git-base.outputs.base }} \
+            --head=${{ steps.git-base.outputs.head }} \
+            --json 2>/dev/null || echo '[]')
+
+          HAS_AFFECTED=$([ "$AFFECTED_ALL" != "[]" ] && echo "true" || echo "false")
+
+          echo "apps=$AFFECTED_APPS" >> $GITHUB_OUTPUT
+          echo "libs=$AFFECTED_LIBS" >> $GITHUB_OUTPUT
+          echo "all=$AFFECTED_ALL" >> $GITHUB_OUTPUT
+          echo "has-affected=$HAS_AFFECTED" >> $GITHUB_OUTPUT
+
+          echo "Affected apps: $AFFECTED_APPS"
+          echo "Affected libs: $AFFECTED_LIBS"
+          echo "Has affected: $HAS_AFFECTED"
+
+      - name: 📊 Print dependency graph
+        run: |
+          pnpm nx graph \
+            --affected \
+            --base=${{ steps.git-base.outputs.base }} \
+            --head=${{ steps.git-base.outputs.head }} \
+            --file=tmp/graph.json 2>/dev/null || true
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 2: Lint + Type Check
+# ──────────────────────────────────────────────────────────────────────
+  lint-and-typecheck:
+    name: 🔍 Lint & Type Check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [setup]
+    if: needs.setup.outputs.has-affected == 'true'
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Run ESLint on affected packages
+        id: lint
+        run: |
+          pnpm nx affected \
+            --target=lint \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=4 \
+            --output-style=stream
+        continue-on-error: false
+
+      - name: 🏷️ Run TypeScript type-check on affected packages
+        id: typecheck
+        run: |
+          pnpm nx affected \
+            --target=type-check \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=4 \
+            --output-style=stream
+        continue-on-error: false
+
+      - name: 🎨 Check formatting (Prettier)
+        run: |
+          pnpm prettier \
+            --check \
+            "packages/**/*.{ts,tsx,json,md,yaml,yml}" \
+            "apps/**/*.{ts,tsx,json,md,yaml,yml}"
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 3: Unit Tests + Coverage
+# ──────────────────────────────────────────────────────────────────────
+  unit-tests:
+    name: 🧪 Unit Tests & Coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [setup]
+    if: needs.setup.outputs.has-affected == 'true'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20.x"]
+        shard: [1, 2, 3]
+        shard-total: [3]
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🧪 Run unit tests (shard ${{ matrix.shard }}/${{ matrix.shard-total }})
+        run: |
+          pnpm nx affected \
+            --target=test \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=2 \
+            --output-style=stream \
+            --args="--coverage --coverageReporters=json,lcov,text --shard=${{ matrix.shard }}/${{ matrix.shard-total }}"
+        env:
+          CI: true
+
+      - name: 📊 Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: |
+            coverage/
+            packages/*/coverage/
+          retention-days: 7
+
+  coverage-merge:
+    name: 📊 Merge Coverage & Enforce Threshold
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [unit-tests]
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 📥 Download all coverage shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+          path: coverage-reports/
+
+      - name: 🔀 Merge coverage reports
+        run: |
+          pnpm dlx nyc merge coverage-reports/ coverage/merged.json
+          pnpm dlx nyc report \
+            --reporter=text \
+            --reporter=lcov \
+            --reporter=json-summary \
+            --temp-dir=coverage/ \
+            --report-dir=coverage/final
+
+      - name: 📏 Enforce coverage thresholds
+        run: |
+          node -e "
+            const summary = require('./coverage/final/coverage-summary.json');
+            const total = summary.total;
+            const thresholds = {
+              lines: ${{ env.COVERAGE_THRESHOLD_LINES }},
+              branches: ${{ env.COVERAGE_THRESHOLD_BRANCHES }},
+              functions: ${{ env.COVERAGE_THRESHOLD_FUNCTIONS }},
+              statements: ${{ env.COVERAGE_THRESHOLD_STATEMENTS }}
+            };
+            let failed = false;
+            for (const [key, threshold] of Object.entries(thresholds)) {
+              const pct = total[key]?.pct ?? 0;
+              const status = pct >= threshold ? '✅' : '❌';
+              console.log(\`\${status} \${key}: \${pct}% (threshold: \${threshold}%)\`);
+              if (pct < threshold) {
+                console.error(\`FAIL: \${key} coverage \${pct}% is below threshold \${threshold}%\`);
+                failed = true;
+              }
+            }
+            if (failed) process.exit(1);
+          "
+
+      - name: 📊 Upload final merged coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-final
+          path: coverage/final/
+          retention-days: 30
+
+      - name: 📤 Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/final/lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 4: Integration Tests
+# ──────────────────────────────────────────────────────────────────────
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [setup, lint-and-typecheck]
+    if: needs.setup.outputs.has-affected == 'true'
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: atlas_test_password
+          POSTGRES_DB: atlas_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      qdrant:
+        image: qdrant/qdrant:v1.9.0
+        ports:
+          - 6333:6333
+        options: >-
+          --health-cmd "curl -f http://localhost:6333/healthz || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🗄️ Run database migrations
+        run: pnpm nx run @atlas/db:migrate
+        env:
+          DATABASE_URL: postgresql://atlas:atlas_test_password@localhost:5432/atlas_test
+
+      - name: 🔗 Run integration tests on affected packages
+        run: |
+          pnpm nx affected \
+            --target=test:integration \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=2 \
+            --output-style=stream
+        env:
+          CI: true
+          NODE_ENV: test
+          DATABASE_URL: postgresql://atlas:atlas_test_password@localhost:5432/atlas_test
+          REDIS_URL: redis://localhost:6379
+          QDRANT_URL: http://localhost:6333
+          ATLAS_TEST_LLM_MOCK: "true"
+
+      - name: 📤 Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: |
+            packages/*/test-results/
+            apps/*/test-results/
+          retention-days: 7
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 5: Security Scanning
+# ──────────────────────────────────────────────────────────────────────
+  security-scan:
+    name: 🔒 Security Scanning
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [setup]
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 NPM/PNPM audit
+        id: npm-audit
+        run: |
+          pnpm audit \
+            --audit-level=high \
+            --json > audit-results.json || true
+
+          HIGH_COUNT=$(cat audit-results.json | \
+            node -e "const d=require('/dev/stdin'); \
+            console.log((d.metadata?.vulnerabilities?.high ?? 0) + \
+            (d.metadata?.vulnerabilities?.critical ?? 0))")
+
+          echo "high-count=$HIGH_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$HIGH_COUNT" -gt "0" ]; then
+            echo "::error::Found $HIGH_COUNT high/critical npm vulnerabilities"
+            cat audit-results.json | node -e "
+              const d=require('/dev/stdin');
+              const vulns = d.vulnerabilities || {};
+              Object.entries(vulns)
+                .filter(([,v]) => ['high','critical'].includes(v.severity))
+                .forEach(([name, v]) => console.log(\`\${v.severity.toUpperCase()}: \${name} - \${v.via[0]?.title ?? 'unknown'}\`));
+            "
+            exit 1
+          fi
+          echo "✅ No high/critical npm vulnerabilities found"
+
+      - name: 🔍 Snyk vulnerability scan
+        uses: snyk/actions/node@master
+        if: ${{ env.SNYK_TOKEN != '' }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: >-
+            --all-projects
+            --severity-threshold=high
+            --sarif-file-output=snyk.sarif
+        continue-on-error: true
+
+      - name: 📤 Upload Snyk SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: ${{ env.SNYK_TOKEN != '' && always() }}
+        with:
+          sarif_file: snyk.sarif
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: 🔍 CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript
+          queries: security-and-quality
+
+      - name: 🔬 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+          upload: true
+
+      - name: 🔍 Secret scanning (truffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ needs.setup.outputs.base-sha }}
+          head: ${{ needs.setup.outputs.head-sha }}
+          extra_args: --only-verified
+
+      - name: 🐳 Container image scan (Trivy) — if Dockerfiles changed
+        id: trivy-scan
+        run: |
+          # Check if any Dockerfiles were modified
+          DOCKERFILES=$(git diff \
+            --name-only \
+            ${{ needs.setup.outputs.base-sha }} \
+            ${{ needs.setup.outputs.head-sha }} \
+            | grep -i dockerfile || true)
+
+          if [ -z "$DOCKERFILES" ]; then
+            echo "No Dockerfiles changed — skipping container scan"
+            exit 0
+          fi
+
+          # Install Trivy
+          sudo apt-get update -qq
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | \
+            sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] \
+            https://aquasecurity.github.io/trivy-repo/deb \
+            $(lsb_release -sc) main" | \
+            sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq
+          sudo apt-get install -y trivy
+
+          # Build and scan each changed Dockerfile
+          for dockerfile in $DOCKERFILES; do
+            CONTEXT=$(dirname "$dockerfile")
+            IMAGE_TAG="atlas-scan:$(date +%s)"
+            echo "::group::Scanning $dockerfile"
+            docker build -t "$IMAGE_TAG" -f "$dockerfile" "$CONTEXT" || continue
+            trivy image \
+              --exit-code 1 \
+              --severity HIGH,CRITICAL \
+              --format sarif \
+              --output trivy-results.sarif \
+              "$IMAGE_TAG"
+            docker rmi "$IMAGE_TAG" || true
+            echo "::endgroup::"
+          done
+
+      - name: 📤 Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-container
+
+      - name: 📊 Security scan summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| NPM Audit (high/critical) | ${{ steps.npm-audit.conclusion == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Scanning | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL | Completed |" >> $GITHUB_STEP_SUMMARY
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 6: Architecture Boundary Validation
+# ──────────────────────────────────────────────────────────────────────
+  architecture-validation:
+    name: 🏛️ Architecture Boundary Validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [setup]
+    if: needs.setup.outputs.has-affected == 'true'
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏛️ Check Nx project boundaries (module tags)
+        run: |
+          # This uses ESLint with @nx/enforce-module-boundaries
+          pnpm nx affected \
+            --target=lint \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=4 \
+            -- --rule '{"@nx/enforce-module-boundaries": "error"}'
+
+      - name: 🔍 Validate circular dependency absence
+        run: |
+          pnpm nx graph \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --file=tmp/dep-graph.json
+
+          # Check for circular dependencies in generated graph
+          node -e "
+            const graph = require('./tmp/dep-graph.json');
+            const deps = graph.graph?.dependencies ?? {};
+            
+            function hasCycle(node, visited, stack, adj) {
+              visited.add(node);
+              stack.add(node);
+              for (const dep of (adj[node] || [])) {
+                if (!visited.has(dep.target)) {
+                  if (hasCycle(dep.target, visited, stack, adj)) return true;
+                } else if (stack.has(dep.target)) {
+                  console.error('Circular dependency: ' + node + ' <-> ' + dep.target);
+                  return true;
+                }
+              }
+              stack.delete(node);
+              return false;
+            }
+
+            const nodes = Object.keys(deps);
+            const visited = new Set();
+            let hasCycles = false;
+            for (const node of nodes) {
+              if (!visited.has(node)) {
+                if (hasCycle(node, visited, new Set(), deps)) {
+                  hasCycles = true;
+                }
+              }
+            }
+            if (hasCycles) {
+              console.error('❌ Circular dependencies detected!');
+              process.exit(1);
+            } else {
+              console.log('✅ No circular dependencies found');
+            }
+          "
+
+      - name: 📐 Check layer violations (domain model)
+        run: |
+          # Atlas layer model: core → engines → agents → api → cli → ui
+          # Verify no upward dependencies exist
+          node scripts/check-layer-violations.js \
+            --graph tmp/dep-graph.json \
+            --config .atlas/architecture-rules.json || true
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 7: Documentation Freshness Check
+# ──────────────────────────────────────────────────────────────────────
+  docs-freshness:
+    name: 📚 Documentation Freshness
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [setup]
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Check for broken internal links
+        run: |
+          pnpm dlx markdown-link-check \
+            --config .markdownlinkcheck.json \
+            $(find docs -name "*.md" | tr '\n' ' ') \
+            2>&1 | tee link-check-results.txt
+          
+          BROKEN=$(grep -c "\[✖\]" link-check-results.txt || echo 0)
+          if [ "$BROKEN" -gt "0" ]; then
+            echo "::error::Found $BROKEN broken links in documentation"
+            exit 1
+          fi
+
+      - name: 📐 Validate ADR format compliance
+        run: |
+          node scripts/validate-adrs.js \
+            --dir docs/adrs \
+            --schema .atlas/adr-schema.json
+
+      - name: 🔄 Check if changed packages have updated docs
+        run: |
+          # Get list of changed packages
+          CHANGED_PACKAGES='${{ needs.setup.outputs.affected-all }}'
+          
+          # For each changed package, check if docs were also updated
+          node scripts/check-doc-freshness.js \
+            --affected="$CHANGED_PACKAGES" \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --warn-only=true
+
+      - name: 🔍 Spell check documentation
+        uses: streetsidesoftware/cspell-action@v6
+        with:
+          files: "docs/**/*.md"
+          config: .cspell.json
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 8: Performance Benchmarks
+# ──────────────────────────────────────────────────────────────────────
+  performance-benchmarks:
+    name: ⚡ Performance Benchmarks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [setup]
+    if: |
+      needs.setup.outputs.has-affected == 'true' &&
+      github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build affected packages
+        run: |
+          pnpm nx affected \
+            --target=build \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=4
+
+      - name: ⚡ Run benchmarks on affected packages (HEAD)
+        run: |
+          pnpm nx affected \
+            --target=bench \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=1 \
+            -- --reporter=json --output=benchmark-results-head.json || true
+
+      - name: 📥 Download base benchmarks
+        uses: actions/cache@v4
+        with:
+          path: benchmark-results-base.json
+          key: benchmarks-${{ needs.setup.outputs.base-sha }}
+
+      - name: 📊 Compare benchmark results
+        id: bench-compare
+        run: |
+          if [ -f benchmark-results-head.json ] && [ -f benchmark-results-base.json ]; then
+            node scripts/compare-benchmarks.js \
+              --base=benchmark-results-base.json \
+              --head=benchmark-results-head.json \
+              --threshold=10 \
+              --output=benchmark-comparison.md
+            echo "has-comparison=true" >> $GITHUB_OUTPUT
+          else
+            echo "Skipping comparison — no baseline available"
+            echo "has-comparison=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 💾 Cache HEAD benchmarks as new baseline
+        uses: actions/cache@v4
+        with:
+          path: benchmark-results-head.json
+          key: benchmarks-${{ needs.setup.outputs.head-sha }}
+
+      - name: 📤 Upload benchmark results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results
+          path: |
+            benchmark-results-head.json
+            benchmark-comparison.md
+          retention-days: 30
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 9: Build Verification
+# ──────────────────────────────────────────────────────────────────────
+  build-verification:
+    name: 🏗️ Build Verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [setup, lint-and-typecheck]
+    if: needs.setup.outputs.has-affected == 'true'
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build affected packages and apps
+        run: |
+          pnpm nx affected \
+            --target=build \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=4 \
+            --output-style=stream
+        env:
+          NODE_ENV: production
+
+      - name: 📦 Verify build outputs exist
+        run: |
+          # Verify that dist/ directories were created for all affected packages
+          node scripts/verify-build-outputs.js \
+            --affected='${{ needs.setup.outputs.affected-all }}'
+
+      - name: 📊 Check bundle sizes
+        run: |
+          pnpm nx affected \
+            --target=analyze \
+            --base=${{ needs.setup.outputs.base-sha }} \
+            --head=${{ needs.setup.outputs.head-sha }} \
+            --parallel=4 \
+            -- --json --output=bundle-analysis.json || true
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            packages/*/dist/
+            apps/*/dist/
+            apps/*/.next/
+          retention-days: 3
+
+# ──────────────────────────────────────────────────────────────────────
+# JOB 10: Status Report — PR Comment
+# ──────────────────────────────────────────────────────────────────────
+  quality-gate-report:
+    name: 📋 Quality Gate Report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs:
+      - setup
+      - lint-and-typecheck
+      - unit-tests
+      - coverage-merge
+      - integration-tests
+      - security-scan
+      - architecture-validation
+      - docs-freshness
+      - performance-benchmarks
+      - build-verification
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📥 Download coverage summary
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-final
+          path: coverage-final/
+        continue-on-error: true
+
+      - name: 📥 Download benchmark comparison
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/
+        continue-on-error: true
+
+      - name: 📊 Generate quality gate report
+        id: generate-report
+        run: |
+          # Determine overall gate status
+          LINT="${{ needs.lint-and-typecheck.result }}"
+          UNIT="${{ needs.unit-tests.result }}"
+          COVERAGE="${{ needs.coverage-merge.result }}"
+          INTEGRATION="${{ needs.integration-tests.result }}"
+          SECURITY="${{ needs.security-scan.result }}"
+          ARCH="${{ needs.architecture-validation.result }}"
+          DOCS="${{ needs.docs-freshness.result }}"
+          PERF="${{ needs.performance-benchmarks.result }}"
+          BUILD="${{ needs.build-verification.result }}"
+
+          status_icon() {
+            case "$1" in
+              success)   echo "✅" ;;
+              failure)   echo "❌" ;;
+              cancelled) echo "⏹️" ;;
+              skipped)   echo "⏭️" ;;
+              *)         echo "⚠️" ;;
+            esac
+          }
+
+          # Check if gate passed
+          FAILED=0
+          for status in "$LINT" "$UNIT" "$COVERAGE" "$INTEGRATION" "$SECURITY" "$ARCH" "$BUILD"; do
+            if [ "$status" = "failure" ]; then
+              FAILED=1
+            fi
+          done
+
+          GATE_STATUS=$( [ "$FAILED" -eq "0" ] && echo "✅ PASSED" || echo "❌ FAILED" )
+
+          # Read coverage if available
+          if [ -f coverage-final/coverage-summary.json ]; then
+            LINES_PCT=$(cat coverage-final/coverage-summary.json | node -e \
+              "const d=require('/dev/stdin'); console.log(d.total?.lines?.pct ?? 'N/A')")
+            BRANCH_PCT=$(cat coverage-final/coverage-summary.json | node -e \
+              "const d=require('/dev/stdin'); console.log(d.total?.branches?.pct ?? 'N/A')")
+          else
+            LINES_PCT="N/A"
+            BRANCH_PCT="N/A"
+          fi
+
+          cat << EOF > report.md
+          ## 🛡️ Atlas Quality Gate — $GATE_STATUS
+
+          **PR:** #${{ github.event.pull_request.number }} · **Commit:** \`${{ needs.setup.outputs.head-sha }}\`
+          **Affected packages:** ${{ needs.setup.outputs.affected-all }}
+
+          ---
+
+          ### 📊 Gate Results
+
+          | Stage | Status | Details |
+          |-------|--------|---------|
+          | 🔍 Lint & Type Check | $(status_icon "$LINT") ${LINT^} | ESLint + TypeScript |
+          | 🧪 Unit Tests | $(status_icon "$UNIT") ${UNIT^} | Vitest |
+          | 📊 Coverage | $(status_icon "$COVERAGE") ${COVERAGE^} | Lines: ${LINES_PCT}% · Branches: ${BRANCH_PCT}% · Threshold: ${{ env.COVERAGE_THRESHOLD_LINES }}% |
+          | 🔗 Integration Tests | $(status_icon "$INTEGRATION") ${INTEGRATION^} | With DB + Redis + Qdrant |
+          | 🔒 Security Scan | $(status_icon "$SECURITY") ${SECURITY^} | Audit + CodeQL + Secrets |
+          | 🏛️ Architecture | $(status_icon "$ARCH") ${ARCH^} | Boundaries + Circular deps |
+          | 📚 Docs Freshness | $(status_icon "$DOCS") ${DOCS^} | Links + ADR + Spell check |
+          | ⚡ Performance | $(status_icon "$PERF") ${PERF^} | Benchmarks vs. baseline |
+          | 🏗️ Build | $(status_icon "$BUILD") ${BUILD^} | Production build |
+
+          ---
+
+          $( [ -f benchmarks/benchmark-comparison.md ] && cat benchmarks/benchmark-comparison.md || echo "" )
+
+          ---
+
+          <sub>🤖 Generated by Atlas Quality Gate · Run [\`#${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) · $(date -u +"%Y-%m-%d %H:%M UTC")</sub>
+          EOF
+
+          echo "report-path=report.md" >> $GITHUB_OUTPUT
+          cat report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: 💬 Post quality gate comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: atlas-quality-gate
+          path: report.md
+
+      - name: ✅ Assert quality gate passed
+        run: |
+          FAILED=0
+          for status in \
+            "${{ needs.lint-and-typecheck.result }}" \
+            "${{ needs.unit-tests.result }}" \
+            "${{ needs.coverage-merge.result }}" \
+            "${{ needs.integration-tests.result }}" \
+            "${{ needs.security-scan.result }}" \
+            "${{ needs.architecture-validation.result }}" \
+            "${{ needs.build-verification.result }}"; do
+            if [ "$status" = "failure" ]; then
+              FAILED=1
+            fi
+          done
+
+          if [ "$FAILED" -eq "1" ]; then
+            echo "❌ Quality gate FAILED — one or more required checks did not pass"
+            exit 1
+          fi
+
+          echo "✅ Quality gate PASSED — all required checks succeeded"

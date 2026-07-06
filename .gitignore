@@ -1,0 +1,136 @@
+# Atlas Engineering OS — .gitignore
+# =============================================================================
+
+# === Dependencies ============================================================
+node_modules/
+.pnp
+.pnp.js
+
+# === Build outputs ===========================================================
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+storybook-static/
+
+# === Nx ======================================================================
+.nx/cache
+.nx/workspace-data
+tmp/
+
+# === TypeScript ==============================================================
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# === Environment & Secrets ===================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
+!.env.template
+
+# Secrets — NEVER commit these
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+secrets/
+vault-secrets/
+
+# === Testing =================================================================
+coverage/
+.nyc_output/
+jest-junit.xml
+test-results/
+playwright-report/
+test-report/
+
+# === IDE & Editor ============================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Keep shared VSCode settings
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# === Logs ====================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# === OS generated ============================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# === Docker ==================================================================
+.docker/data/
+docker-compose.override.yml
+
+# === Terraform ===============================================================
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# === Python (for ML engines) =================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+.eggs/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# === Prisma ==================================================================
+prisma/migrations/**/migration_lock.toml
+
+# === AI & ML =================================================================
+*.model
+*.pkl
+*.h5
+checkpoints/
+wandb/
+mlruns/
+
+# === Misc ====================================================================
+.turbo/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.map
+!*.d.ts.map

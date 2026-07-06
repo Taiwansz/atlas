@@ -1,0 +1,145 @@
+{
+  "root": true,
+  "ignorePatterns": ["**/*"],
+  "plugins": ["@nx"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "enforceBuildableLibDependency": true,
+            "allow": [],
+            "depConstraints": [
+              {
+                "sourceTag": "scope:app",
+                "onlyDependOnLibsWithTags": [
+                  "scope:engine",
+                  "scope:package",
+                  "scope:shared"
+                ]
+              },
+              {
+                "sourceTag": "scope:engine",
+                "onlyDependOnLibsWithTags": [
+                  "scope:package",
+                  "scope:shared"
+                ]
+              },
+              {
+                "sourceTag": "scope:package",
+                "onlyDependOnLibsWithTags": [
+                  "scope:shared"
+                ]
+              },
+              {
+                "sourceTag": "scope:shared",
+                "onlyDependOnLibsWithTags": [
+                  "scope:shared"
+                ]
+              },
+              {
+                "sourceTag": "type:ui",
+                "onlyDependOnLibsWithTags": [
+                  "type:ui",
+                  "type:util",
+                  "type:data-access"
+                ]
+              },
+              {
+                "sourceTag": "type:feature",
+                "onlyDependOnLibsWithTags": [
+                  "type:feature",
+                  "type:ui",
+                  "type:util",
+                  "type:data-access"
+                ]
+              },
+              {
+                "sourceTag": "type:data-access",
+                "onlyDependOnLibsWithTags": [
+                  "type:data-access",
+                  "type:util"
+                ]
+              },
+              {
+                "sourceTag": "type:util",
+                "onlyDependOnLibsWithTags": [
+                  "type:util"
+                ]
+              },
+              {
+                "sourceTag": "layer:security",
+                "bannedExternalImports": [
+                  "eval",
+                  "Function"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "extends": [
+        "plugin:@typescript-eslint/strict-type-checked",
+        "plugin:@typescript-eslint/stylistic-type-checked",
+        "prettier"
+      ],
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "project": true
+      },
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unsafe-assignment": "error",
+        "@typescript-eslint/no-unsafe-member-access": "error",
+        "@typescript-eslint/no-unsafe-call": "error",
+        "@typescript-eslint/no-unsafe-return": "error",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
+        "@typescript-eslint/prefer-optional-chain": "error",
+        "@typescript-eslint/no-non-null-assertion": "error",
+        "@typescript-eslint/consistent-type-imports": [
+          "error",
+          { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
+        ],
+        "@typescript-eslint/consistent-type-exports": "error",
+        "@typescript-eslint/no-import-type-side-effects": "error",
+        "@typescript-eslint/naming-convention": [
+          "error",
+          {
+            "selector": "interface",
+            "format": ["PascalCase"],
+            "prefix": ["I"]
+          },
+          {
+            "selector": "typeAlias",
+            "format": ["PascalCase"]
+          },
+          {
+            "selector": "enum",
+            "format": ["PascalCase"]
+          },
+          {
+            "selector": "enumMember",
+            "format": ["UPPER_CASE"]
+          }
+        ],
+        "no-console": "warn",
+        "no-debugger": "error",
+        "prefer-const": "error",
+        "no-var": "error"
+      }
+    },
+    {
+      "files": ["*.spec.ts", "*.test.ts", "*.spec.tsx", "*.test.tsx"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off"
+      }
+    }
+  ]
+}
