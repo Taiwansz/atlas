@@ -119,6 +119,7 @@ RFCs specify Atlas protocols, formats, and systems in detail.
 |----------|-------------|
 | [Competitive Analysis](../research/state-of-art/COMPETITIVE_ANALYSIS.md) | Competitor analysis |
 | [AI Landscape 2026](../research/state-of-art/AI_LANDSCAPE_2026.md) | AI ecosystem analysis |
+| [Architectural Audit](research/ARCHITECTURAL_AUDIT.md) | Comprehensive foundation audit |
 
 ---
 
