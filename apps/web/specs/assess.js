@@ -23,7 +23,7 @@ const path = require('path');
 
   // Onboarding action: click pre-fill suggest button
   console.log('Clicking AI Prompt pre-fill template...');
-  await page.click('text=🤖 AI Prompt');
+  await page.click('text=AI Prompting Studio');
   await page.waitForTimeout(500);
 
   // Take onboarding pre-filled screenshot

@@ -762,9 +762,15 @@ export default function Page() {
               {/* PRE-FILL WOW SUGGESTIONS */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '10px' }}>
                 <span style={{ color: 'var(--text-muted)', alignSelf: 'center', marginRight: '4px' }}>EXEMPLOS RÁPIDOS:</span>
-                <button className="tactical-btn" onClick={() => handlePreFill('ai')}>[ 🤖 AI Prompting Studio ]</button>
-                <button className="tactical-btn" onClick={() => handlePreFill('fintech')}>[ 💳 Ledger API (Rust) ]</button>
-                <button className="tactical-btn" onClick={() => handlePreFill('game')}>[ 🎮 Game Lobby (Go) ]</button>
+                <button className="tactical-btn" onClick={() => handlePreFill('ai')}>
+                  [ <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px', verticalAlign: 'middle', display: 'inline-block' }}><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg> AI Prompting Studio ]
+                </button>
+                <button className="tactical-btn" onClick={() => handlePreFill('fintech')}>
+                  [ <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px', verticalAlign: 'middle', display: 'inline-block' }}><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Ledger API (Rust) ]
+                </button>
+                <button className="tactical-btn" onClick={() => handlePreFill('game')}>
+                  [ <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px', verticalAlign: 'middle', display: 'inline-block' }}><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/></svg> Game Lobby (Go) ]
+                </button>
               </div>
 
               <form onSubmit={startAlignment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1518,7 +1524,8 @@ Maestro AST Watcher daemon intercepts staging commits. In the event of a code va
                                   ))}
                                 </div>
                                 <div style={{ fontSize: '10px', color: 'var(--accent-orange)' }}>
-                                  ⚠️ Risk Analysis: {sprint.risk}
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '4px', verticalAlign: 'middle', display: 'inline-block' }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                  Risk Analysis: {sprint.risk}
                                 </div>
                               </div>
                             ))}

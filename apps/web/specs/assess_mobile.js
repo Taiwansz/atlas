@@ -25,7 +25,7 @@ const path = require('path');
 
   // Pre-fill template
   console.log('Selecting pre-fill template on mobile...');
-  await page.click('text=🤖 AI Prompt');
+  await page.click('text=AI Prompting Studio');
   await page.waitForTimeout(500);
   await page.screenshot({ path: path.join(artifactDir, 'mobile_onboarding.png') });
 
