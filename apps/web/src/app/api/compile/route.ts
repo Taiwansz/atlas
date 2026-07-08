@@ -75,6 +75,9 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
   ]
 }`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
     const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -89,8 +92,10 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: 'Compile o blueprint estruturado agora com os prompts de IA inclusos.' }
         ]
-      })
+      }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.json();
