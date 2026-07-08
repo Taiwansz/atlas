@@ -70,6 +70,7 @@ RFCs specify Atlas protocols, formats, and systems in detail.
 | [RFC-008](rfc/RFC-008-ai-provider-abstraction.md) | AI Provider Abstraction | ✅ Final |
 | [RFC-009](rfc/RFC-009-cognitive-system.md) | Atlas Cognitive System Specification | ✅ Final |
 | [RFC-010](rfc/RFC-010-engineering-standard.md) | Atlas Engineering Standard (AES) | ✅ Final |
+| [RFC-011](rfc/RFC-011-user-experience-specification.md) | Atlas User Experience (UX) Specification | ✅ Final |
 
 ---
 
