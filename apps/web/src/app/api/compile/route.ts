@@ -15,22 +15,22 @@ Sua tarefa é traduzir a especificação técnica do projeto em um Blueprint JSO
 Nome do Projeto: "${projectName}"
 Stack Técnica: "${projectStack}"
 Descrição da Ideia: "${projectDesc} / ${projectIdea}"
-Respostas da Entrevista: ${JSON.stringify(answers || {})}
+Respostas de Negócio da Entrevista: ${JSON.stringify(answers || {})}
 
 Você DEVE retornar APENAS um objeto JSON válido, sem explicações extras, sem markdown e sem caixas de código (code blocks). A resposta deve ser diretamente parseável como JSON.
 
 O JSON deve seguir EXATAMENTE a estrutura abaixo:
 {
   "projectName": "${projectName}",
-  "architecture": "Clean Architecture / Hexagonal Architecture / MVC (escolha a ideal)",
+  "architecture": "Clean Architecture / Hexagonal Architecture / MVC (escolha a ideal para o projeto)",
   "stackLabel": "${projectStack === 'rust-actix' ? 'Rust Actix & SQLx' : projectStack === 'go-fiber' ? 'Go Fiber & SQLx' : 'Next.js & Fastify (TS)'}",
   "modules": [
-    { "name": "ingress/api", "type": "ingress", "dependencies": ["logic"], "purpose": "Descrição curta do módulo", "allowedEgress": ["internet"] },
-    { "name": "logic/core", "type": "logic", "dependencies": ["db"], "purpose": "Regras de negócio principais", "allowedEgress": [] },
-    { "name": "db/postgres", "type": "core", "dependencies": [], "purpose": "Persistência relacional", "allowedEgress": ["db"] }
+    { "name": "ingress/api", "type": "ingress", "dependencies": ["logic"], "purpose": "Descrição do módulo de entrada", "allowedEgress": ["internet"] },
+    { "name": "logic/core", "type": "logic", "dependencies": ["db"], "purpose": "Descrição das regras de negócio principais", "allowedEgress": [] },
+    { "name": "db/postgres", "type": "core", "dependencies": [], "purpose": "Descrição da persistência", "allowedEgress": ["db"] }
   ],
   "constitution": [
-    { "rule": "CONSTITUTION-RULE-01", "severity": "CRITICAL", "description": "Descrição da regra específica da stack" },
+    { "rule": "CONSTITUTION-RULE-01", "severity": "CRITICAL", "description": "Descrição da regra arquitetural específica para esta stack" },
     { "rule": "CONSTITUTION-RULE-02", "severity": "WARNING", "description": "Segunda regra específica da stack" }
   ],
   "adrs": [
@@ -38,7 +38,7 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
   ],
   "backlog": [
     { "id": "TASK-101", "title": "Título da tarefa técnica", "type": "TECH", "description": "Descrição da tarefa", "priority": "HIGH", "estimate": 3 },
-    { "id": "TASK-102", "title": "Título da tarefa funcional", "type": "FEAT", "description": "Descrição da feature", "priority": "MEDIUM", "estimate": 5 }
+    { "id": "TASK-102", "title": "Título da feature de negócio", "type": "FEAT", "description": "Descrição da feature", "priority": "MEDIUM", "estimate": 5 }
   ],
   "roadmap": [
     { "id": "SPRINT-1", "name": "Sprint 1: Bootstrap", "goal": "Alinhamento e esqueleto da stack", "tasks": ["TASK-101"], "risk": "Baixo risco" },
@@ -54,8 +54,25 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
     "status": "PENDING_APPROVAL",
     "impactScore": "+120 Engineering Score",
     "risk": "LOW (Tested in Sandbox)",
-    "details": "Converts legacy Knex file queries to type-safe Prisma client actions and maps model schemas."
-  }
+    "details": "Converts legacy SQL file queries to clean repository integration layer."
+  },
+  "aiPrompts": [
+    {
+      "step": "Etapa 1: Setup do Workspace e Invariants",
+      "tool": "Claude Code / Cursor / Bolt",
+      "prompt": "Instrução detalhada de prompt para configurar o repositório seguindo as regras da Constitution.md."
+    },
+    {
+      "step": "Etapa 2: Modelagem e Contratos de Repositório",
+      "tool": "Devin / Lovable / Cursor",
+      "prompt": "Prompt detalhado instruindo a construir as interfaces de repositórios e tipos de dados."
+    },
+    {
+      "step": "Etapa 3: Resolução de Vulnerabilidade de Drift",
+      "tool": "Claude Code / Gemini CLI",
+      "prompt": "Prompt contendo a refatoração do código drifted para alinhar com os contratos arquiteturais aprovados."
+    }
+  ]
 }`;
 
     const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
@@ -66,11 +83,11 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
       },
       body: JSON.stringify({
         model: 'deepseek-ai/deepseek-v4-flash',
-        max_tokens: 1500,
+        max_tokens: 1800,
         temperature: 0.1,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: 'Compile o blueprint estruturado agora.' }
+          { role: 'user', content: 'Compile o blueprint estruturado agora com os prompts de IA inclusos.' }
         ]
       })
     });
@@ -83,7 +100,7 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
     const data = await response.json();
     let reply = (data.choices?.[0]?.message?.content || '').trim();
 
-    // Defensive parsing: strip markdown blocks if model wraps it
+    // Clean up code blocks if present
     if (reply.includes('```')) {
       const match = reply.match(/```(?:json)?([\s\S]*?)```/);
       if (match && match[1]) {
@@ -91,9 +108,7 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
       }
     }
 
-    // Attempt to validate JSON parsing before returning
     const parsed = JSON.parse(reply);
-
     return NextResponse.json(parsed);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -9,15 +9,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'NVIDIA API Key not configured on server' }, { status: 500 });
     }
 
-    const SYSTEM_PROMPT = `Você é o Maestro, o Arquiteto IA do Atlas Engineering Operating System.
-Sua missão é entrevistar o desenvolvedor para alinhar os requisitos técnicos antes de compilar o Blueprint de governança.
-Você recebeu a ideia do software: "${prompt}" e a stack desejada: "${projectStack}".
+    const SYSTEM_PROMPT = `Você é o Maestro, o Agente de Discovery e Arquiteto de Software do Atlas Engineering Operating System.
+Sua missão é entrevistar o usuário em português para mapear os requisitos de negócio da ideia dele: "${prompt}".
+Stack Técnica Selecionada: "${projectStack}".
 
-REGRAS DE CONDUTA:
-1. Seja tático, breve e direto ao ponto. Use tom brutalista e profissional. Não use saudações amigáveis nem emojis.
-2. Formule perguntas cirúrgicas sobre dependências físicas, isolamento de dados ou limites lógicos do projeto.
-3. Se você já fez perguntas suficientes (duas perguntas são suficientes para concluir o alinhamento) ou se o desenvolvedor responder adequadamente às suas questões, responda EXATAMENTE com a palavra-chave: "CONVERT_TO_COMPILER_NOW" para sinalizar que o alinhamento foi concluído.
-4. Suas respostas devem ser curtas (máximo de 3 linhas de texto).`;
+REGRAS DE DIÁLOGO E NEGÓCIO:
+1. Conduza uma entrevista amigável, clara e progressiva.
+2. Faça perguntas estritamente sobre REGRAS DE NEGÓCIO, necessidades dos usuários, personas, problemas, fluxos de uso e objetivos.
+3. Proibido fazer perguntas técnicas (evite termos como SQL, REST, Docker, ORM, gRPC, JWT, etc.). Traduza o negócio para a tecnologia internamente.
+4. Se você já fez perguntas suficientes (duas perguntas são suficientes para concluir o alinhamento) ou se o usuário responder adequadamente, retorne a palavra-chave "CONVERT_TO_COMPILER_NOW" no campo "reply".
+5. Suas perguntas devem ser curtas e diretas ao ponto (máximo de 3 linhas).
+
+Você DEVE retornar APENAS um objeto JSON válido que siga exatamente o seguinte esquema, sem markdown e sem caixas de código (code blocks):
+{
+  "reply": "Sua pergunta para o usuário ou a palavra-chave CONVERT_TO_COMPILER_NOW",
+  "partialProfile": {
+    "projectName": "Nome do projeto sugerido (ex: frota-segura)",
+    "domainDescription": "Descrição de 1-2 sentenças explicando o domínio de negócio descoberto",
+    "personas": ["Persona 1: Exemplo de papel de usuário", "Persona 2: Outro papel de usuário"],
+    "suggestedTechs": ["Tecnologia 1", "Tecnologia 2", "Tecnologia 3"],
+    "entities": ["Entidade A (ex: Veículo: id, placa, status)", "Entidade B (ex: Motorista: id, CNH)"],
+    "modules": [
+      { "name": "modulo-1", "purpose": "Módulo de API/Ingress" },
+      { "name": "modulo-2", "purpose": "Módulo de Regras de Negócio" }
+    ],
+    "features": ["Funcionalidade A (ex: Cadastro de veículos)", "Funcionalidade B (ex: Escalonamento de rotas)"],
+    "complexity": "Baixa / Média / Alta (Estimativa)",
+    "risks": ["Risco 1 (ex: Latência de GPS)", "Risco 2 (ex: Consistência de inventário)"]
+  }
+}
+`;
 
     const chatMessages = [
       { role: 'system', content: SYSTEM_PROMPT },
@@ -32,8 +53,8 @@ REGRAS DE CONDUTA:
       },
       body: JSON.stringify({
         model: 'deepseek-ai/deepseek-v4-flash',
-        max_tokens: 150,
-        temperature: 0.2,
+        max_tokens: 1000,
+        temperature: 0.15,
         messages: chatMessages
       })
     });
@@ -44,10 +65,18 @@ REGRAS DE CONDUTA:
     }
 
     const data = await response.json();
-    const reply = (data.choices?.[0]?.message?.content || '').trim()
-      .replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    let replyText = (data.choices?.[0]?.message?.content || '').trim();
 
-    return NextResponse.json({ reply });
+    // Clean up code blocks if present
+    if (replyText.includes('```')) {
+      const match = replyText.match(/```(?:json)?([\s\S]*?)```/);
+      if (match && match[1]) {
+        replyText = match[1].trim();
+      }
+    }
+
+    const parsed = JSON.parse(replyText);
+    return NextResponse.json(parsed);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
