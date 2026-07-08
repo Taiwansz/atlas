@@ -292,6 +292,7 @@ export default function Page() {
   const [interviewStep, setInterviewStep] = useState(0); // 0: enter, 1: q1, 2: q2, 3: approval recap
   const [projectAnswers, setProjectAnswers] = useState<{ [key: string]: string }>({});
   const [partialProfile, setPartialProfile] = useState<any | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const [activeRightTab, setActiveRightTab] = useState<'domain' | 'topology' | 'governance' | 'drift'>('domain');
   const [isAnalyzingRight, setIsAnalyzingRight] = useState(false);
 
@@ -472,6 +473,7 @@ export default function Page() {
       { sender: 'ai', text: `Mapeando domínio de negócio e regras iniciais para a stack [${projectStack.toUpperCase()}]...` }
     ]);
     setIsAnalyzingRight(true);
+    setIsChatLoading(true);
 
     try {
       const res = await fetch('/api/chat', {
@@ -518,6 +520,7 @@ export default function Page() {
       });
     } finally {
       setIsAnalyzingRight(false);
+      setIsChatLoading(false);
     }
   };
 
@@ -531,6 +534,7 @@ export default function Page() {
     setChatMessages(updatedMessages);
     setUserAnswerInput('');
     setIsAnalyzingRight(true);
+    setIsChatLoading(true);
 
     const mapped = updatedMessages.map(msg => ({
       role: msg.sender === 'user' ? ('user' as const) : ('assistant' as const),
@@ -591,6 +595,7 @@ export default function Page() {
       setInterviewStep(3);
     } finally {
       setIsAnalyzingRight(false);
+      setIsChatLoading(false);
     }
   };
 
@@ -1206,13 +1211,14 @@ export default function Page() {
                             type="text" 
                             className="tactical-input" 
                             style={{ flex: 1 }}
-                            placeholder="Responda à IA sobre as regras do seu negócio..."
+                            placeholder={isChatLoading ? "O Maestro está formulando a pergunta..." : "Responda à IA sobre as regras do seu negócio..."}
                             value={userAnswerInput}
                             onChange={(e) => setUserAnswerInput(e.target.value)}
+                            disabled={isChatLoading}
                             required
                           />
-                          <button type="submit" className="tactical-btn primary" style={{ width: '100px' }}>
-                            ENVIAR
+                          <button type="submit" className="tactical-btn primary" style={{ width: '100px' }} disabled={isChatLoading}>
+                            {isChatLoading ? 'AGUARDE' : 'ENVIAR'}
                           </button>
                         </form>
                       ) : (

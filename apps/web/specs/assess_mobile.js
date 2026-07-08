@@ -39,17 +39,27 @@ const path = require('path');
     await page.waitForSelector('text=DISCOVERY CHAT SESSION');
     await page.screenshot({ path: path.join(artifactDir, 'mobile_interview.png') });
 
+    // Wait for input to be active (Maestro ready)
+    console.log('Waiting for Maestro input field to become active...');
+    await page.waitForSelector('.left-pane input[type="text"]:not([disabled])');
+
     // Fill and submit Question 1
     console.log('Answering Question 1...');
     await page.fill('.left-pane input[type="text"]', 'Use queues on Redis.');
     await page.click('button:has-text("ENVIAR")');
-    await page.waitForTimeout(5000);
+    
+    // Wait for Maestro response to render and unlock input
+    console.log('Waiting for Maestro reply to Question 1...');
+    await page.waitForSelector('.left-pane input[type="text"]:not([disabled])', { timeout: 15000 });
 
     // Fill and submit Question 2
     console.log('Answering Question 2...');
     await page.fill('.left-pane input[type="text"]', 'Single DB schema.');
     await page.click('button:has-text("ENVIAR")');
-    await page.waitForTimeout(5000);
+    
+    // Wait for Approve button to render
+    console.log('Waiting for architecture recap approval screen...');
+    await page.waitForSelector('button:has-text("APROVAR E COMPILAR BLUEPRINT")', { timeout: 15000 });
     
     // Capture recap screenshot
     console.log('Taking recap screenshot...');
@@ -76,7 +86,7 @@ const path = require('path');
     await page.screenshot({ path: path.join(artifactDir, 'mobile_blueprint.png') });
 
     // Click on "DRIFT AUDITOR" tab
-    console.log('Navigating to Audit tab...');
+    console.log('Navigating to Drift Auditor tab...');
     await page.click('text=DRIFT AUDITOR');
     await page.waitForTimeout(1000);
     await page.screenshot({ path: path.join(artifactDir, 'mobile_audit.png') });

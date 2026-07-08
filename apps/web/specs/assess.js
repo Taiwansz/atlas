@@ -41,17 +41,27 @@ const path = require('path');
   await page.waitForTimeout(500);
   await page.screenshot({ path: path.join(artifactDir, 'onboarding_interview.png') });
 
+  // Wait for input to be active (Maestro ready)
+  console.log('Waiting for Maestro input field to become active...');
+  await page.waitForSelector('.left-pane input[type="text"]:not([disabled])');
+
   // Fill and submit Question 1
   console.log('Answering Question 1...');
   await page.fill('.left-pane input[type="text"]', 'Use queues for processing data asynchronously.');
   await page.click('button:has-text("ENVIAR")');
-  await page.waitForTimeout(5000);
+  
+  // Wait for Maestro response to render and unlock input
+  console.log('Waiting for Maestro reply to Question 1...');
+  await page.waitForSelector('.left-pane input[type="text"]:not([disabled])', { timeout: 15000 });
 
   // Fill and submit Question 2
   console.log('Answering Question 2...');
   await page.fill('.left-pane input[type="text"]', 'Adhere strictly to clean architecture.');
   await page.click('button:has-text("ENVIAR")');
-  await page.waitForTimeout(5000);
+
+  // Wait for Approve button to render
+  console.log('Waiting for architecture recap approval screen...');
+  await page.waitForSelector('button:has-text("APROVAR E COMPILAR BLUEPRINT")', { timeout: 15000 });
 
   // Click Approve and Compile Blueprint
   console.log('Approving architecture layout...');
