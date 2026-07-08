@@ -23,6 +23,12 @@ const path = require('path');
   console.log(`Navigating to mobile view: ${url}...`);
   await page.goto(url, { waitUntil: 'networkidle' });
 
+  console.log('Injecting mock user session...');
+  await page.evaluate(() => {
+    window.localStorage.setItem('atlas_e2e_mock_user', 'true');
+  });
+  await page.goto(url, { waitUntil: 'networkidle' });
+
   // Pre-fill template
   console.log('Selecting pre-fill template on mobile...');
   await page.click('text=AI Prompting Studio');

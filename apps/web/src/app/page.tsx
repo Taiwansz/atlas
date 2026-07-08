@@ -391,6 +391,15 @@ export default function Page() {
   const [isZipping, setIsZipping] = useState(false);
   const [dirHandle, setDirHandle] = useState<any | null>(null);
 
+  // AUTH STATES
+  const [user, setUser] = useState<any | null>(null);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
   // INTERVIEW STAGE STATE
   const [chatMessages, setChatMessages] = useState<{ sender: 'ai' | 'user'; text: string }[]>([]);
   const [userAnswerInput, setUserAnswerInput] = useState('');
@@ -417,6 +426,81 @@ export default function Page() {
   const [evolutionRfcStatus, setEvolutionRfcStatus] = useState<'PENDING_APPROVAL' | 'EXECUTING' | 'EXECUTED'>('PENDING_APPROVAL');
 
   const logEndRef = useRef<HTMLDivElement>(null);
+
+  // MONITOR AUTH STATE CHANGES
+  useEffect(() => {
+    // Check active session on load
+    const checkSession = async () => {
+      if (typeof window !== 'undefined' && window.localStorage.getItem('atlas_e2e_mock_user')) {
+        setUser({ email: 'test-user@atlas.dev', user_metadata: { name: 'E2E Tester' } });
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+      }
+    };
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setUser(session.user);
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: authPassword
+      });
+      if (error) throw error;
+      setUser(data.user);
+    } catch (err: any) {
+      setAuthError(err.message || 'Erro ao entrar.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: authEmail,
+        password: authPassword,
+        options: {
+          data: {
+            name: authName,
+            plan: 'free'
+          }
+        }
+      });
+      if (error) throw error;
+      alert('Cadastro concluído! Verifique seu e-mail para confirmação.');
+      setAuthMode('login');
+    } catch (err: any) {
+      setAuthError(err.message || 'Erro ao cadastrar.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    resetWorkspace();
+  };
 
   // DETECT LOCAL WORKSPACE INFORMATION ON STARTUP
   useEffect(() => {
@@ -597,35 +681,9 @@ export default function Page() {
       } else {
         throw new Error('API route failure');
       }
-    } catch (e) {
-      console.warn('API error during chat alignment, using local fallback:', e);
-      if (interviewStep === 1) {
-        setProjectAnswers((prev) => ({ ...prev, q1: userText }));
-        let secondQuestion = '';
-        if (projectStack === 'rust-actix') {
-          secondQuestion = 'Excelente. E quanto à autenticação de sessões? Devemos implementar tokens JWT auto-contidos decodificados em memória, ou validar sessões ativas no banco Redis a cada requisição?';
-        } else if (projectStack === 'go-fiber') {
-          secondQuestion = 'Entendido. Deseja que os microsserviços se comuniquem por meio de REST/HTTP tradicional ou prefere utilizar gRPC com codificação protobuf para otimizar a velocidade de transporte de dados?';
-        } else {
-          secondQuestion = 'Entendido. A configuração de variáveis de ambiente deve seguir um modelo multi-tenant isolado por banco de dados ou compartilharemos um esquema relacional unificado?';
-        }
-        setChatMessages((prev) => [
-          ...prev,
-          { sender: 'ai', text: 'Entendi o seu ponto. Registrado na especificação arquitetural.' },
-          { sender: 'ai', text: secondQuestion }
-        ]);
-        setInterviewStep(2);
-      } else {
-        setProjectAnswers((prev) => ({ ...prev, q2: userText }));
-        setChatMessages((prev) => [
-          ...prev,
-          { sender: 'ai', text: 'Todas as diretrizes foram compiladas. Alinhamento de engenharia concluído com sucesso!' },
-          { sender: 'ai', text: 'Iniciando compilador de Blueprints...' }
-        ]);
-        setTimeout(() => {
-          triggerCompilation();
-        }, 1500);
-      }
+    } catch (e: any) {
+      alert('Erro na API da NVIDIA: ' + e.message);
+      setFlowStage('wizard');
     }
   };
 
@@ -705,16 +763,8 @@ export default function Page() {
           ]);
         })
         .catch(err => {
-          console.warn('Nvidia compiler failed, using local builder template:', err);
-          const compiledFallback = generateProjectProfile(projectName, projectStack, projectDesc, projectIdea, projectAnswers);
-          setProfile(compiledFallback);
-          
-          const now = new Date().toLocaleTimeString();
-          setLogs([
-            { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
-            { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiledFallback.projectName}. Stack: ${compiledFallback.stackLabel}`, type: 'info' },
-            { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to ${compiledFallback.modules.length} modules.`, type: 'info' }
-          ]);
+          alert('Erro de Compilação do Blueprint na NVIDIA: ' + err.message);
+          setFlowStage('wizard');
         })
         .finally(() => {
           setFlowStage('dashboard');
@@ -952,6 +1002,88 @@ export default function Page() {
       <div className="blueprint-grid" />
       <div className="crt-overlay" />
 
+      {/* 0. AUTHENTICATION MODULE (LOGIN / SIGNUP) */}
+      {!user && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px'
+        }}>
+          <div className="console-panel" style={{ width: '100%', maxWidth: '400px', height: 'auto' }}>
+            <div className="panel-header">
+              <span className="panel-title">[ AUTHENTICATION GATE ]</span>
+              <span>ACCESS IDENTITY MODULE</span>
+            </div>
+            
+            <div className="panel-content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--accent-blue)', fontWeight: 'bold' }}>// IDENTITY VERIFICATION</span>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                  Acesse ou crie sua conta para compilar Blueprints e sincronizar telemetrias no Supabase Cloud.
+                </p>
+              </div>
+
+              {authError && (
+                <div style={{ color: 'var(--accent-red)', fontSize: '11px', border: '1px solid var(--accent-red)', padding: '8px', background: 'rgba(255, 94, 94, 0.05)' }}>
+                  ⚠️ {authError}
+                </div>
+              )}
+
+              <form onSubmit={authMode === 'login' ? handleLogin : handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {authMode === 'signup' && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', marginBottom: '4px' }}>NOME COMPLETO</label>
+                    <input 
+                      type="text" 
+                      className="tactical-input" 
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', marginBottom: '4px' }}>ENDEREÇO DE E-MAIL</label>
+                  <input 
+                    type="email" 
+                    className="tactical-input" 
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', marginBottom: '4px' }}>SENHA DE SEGURANÇA</label>
+                  <input 
+                    type="password" 
+                    className="tactical-input" 
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <button type="submit" disabled={authLoading} className="tactical-btn primary" style={{ width: '100%', padding: '10px', marginTop: '8px' }}>
+                  {authLoading ? 'PROCESSANDO...' : authMode === 'login' ? 'ENTRAR NO CONSOLE' : 'CRIAR CONTA'}
+                </button>
+              </form>
+
+              <div style={{ textAlign: 'center', fontSize: '11px', marginTop: '8px' }}>
+                {authMode === 'login' ? (
+                  <span>Não tem conta? <button className="tactical-btn" onClick={() => setAuthMode('signup')} style={{ border: 0, padding: 0, color: 'var(--accent-blue)', background: 'transparent', textDecoration: 'underline', cursor: 'pointer' }}>Cadastre-se</button></span>
+                ) : (
+                  <span>Já tem conta? <button className="tactical-btn" onClick={() => setAuthMode('login')} style={{ border: 0, padding: 0, color: 'var(--accent-blue)', background: 'transparent', textDecoration: 'underline', cursor: 'pointer' }}>Fazer Login</button></span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {user && (
+        <>
+
       {/* 1. INITIAL WIZARD SCREEN */}
       {flowStage === 'wizard' && (
         <div style={{
@@ -959,11 +1091,11 @@ export default function Page() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px'
         }}>
           <div className="console-panel" style={{ width: '100%', maxWidth: '720px', height: 'auto' }}>
-            <div className="panel-header">
-              <span className="panel-title">
-                <span>[ BOOTSTRAP: DISCONNECTED ]</span>
-              </span>
-              <span>ATLAS ENGINEERING OPERATING SYSTEM</span>
+            <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="panel-title">[ BOOTSTRAP: CONNECTED ]</span>
+              <button onClick={handleLogout} className="tactical-btn" style={{ padding: '2px 8px', fontSize: '9px', borderColor: 'var(--accent-red)', color: 'var(--accent-red)', cursor: 'pointer', background: 'transparent' }}>
+                [ LOGOUT ]
+              </button>
             </div>
             
             <div className="panel-content" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -1226,8 +1358,12 @@ export default function Page() {
                 {isDark ? 'LIGHT_MODE' : 'DARK_MODE'}
               </button>
               
-              <button className="tactical-btn" onClick={resetWorkspace} style={{ padding: '4px 8px', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}>
-                RESET_WORKSPACE
+              <button className="tactical-btn" onClick={resetWorkspace} style={{ padding: '4px 8px' }}>
+                RESET
+              </button>
+
+              <button className="tactical-btn" onClick={handleLogout} style={{ padding: '4px 8px', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}>
+                LOGOUT
               </button>
             </div>
           </header>
@@ -1822,6 +1958,8 @@ Maestro AST Watcher daemon intercepts staging commits. In the event of a code va
           </nav>
 
         </div>
+      )}
+      </>
       )}
     </div>
   );

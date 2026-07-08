@@ -17,6 +17,12 @@ const path = require('path');
   console.log(`Navigating to ${url}...`);
   await page.goto(url, { waitUntil: 'networkidle' });
 
+  console.log('Injecting mock user session...');
+  await page.evaluate(() => {
+    window.localStorage.setItem('atlas_e2e_mock_user', 'true');
+  });
+  await page.goto(url, { waitUntil: 'networkidle' });
+
   // Verify page title
   const title = await page.title();
   console.log(`Page title: ${title}`);
