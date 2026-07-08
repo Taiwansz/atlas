@@ -389,6 +389,7 @@ export default function Page() {
   const [isSyncingSupabase, setIsSyncingSupabase] = useState(false);
   const [isSynced, setIsSynced] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
+  const [dirHandle, setDirHandle] = useState<any | null>(null);
 
   // INTERVIEW STAGE STATE
   const [chatMessages, setChatMessages] = useState<{ sender: 'ai' | 'user'; text: string }[]>([]);
@@ -629,45 +630,69 @@ export default function Page() {
           projectAnswers
         );
 
-        // Fetch physical files mapping & real workspace details if available
-        Promise.all([
-          fetch('/api/workspace').then(res => res.json()).catch(() => null),
-          fetch('/api/audit').then(res => res.json()).catch(() => null)
-        ]).then(([workData, auditData]) => {
-          if (workData && workData.isLocal) {
-            compiled.projectName = workData.projectName;
-            compiled.description = workData.description;
-            if (workData.modules && workData.modules.length > 0) {
-              compiled.modules = workData.modules;
-            }
-          }
-          if (auditData && auditData.physicalCode) {
-            compiled.driftPhysical = auditData.physicalCode;
-            compiled.driftFile = auditData.filePath;
-            compiled.driftContract = auditData.contractCode;
-            compiled.driftResolved = auditData.driftResolved;
-            setDriftStatus(auditData.driftStatus);
-            if (auditData.driftStatus === 'clean') {
-              setScore(1000);
-            } else {
-              setScore(820);
-            }
-          }
-        }).catch(err => {
-          console.warn('API routes bypass (local execution error):', err);
-        }).finally(() => {
-          setProfile(compiled);
-          
-          // Feed initial logs in console
-          const now = new Date().toLocaleTimeString();
-          setLogs([
-            { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
-            { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiled.projectName}. Stack: ${compiled.stackLabel}`, type: 'info' },
-            { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to ${compiled.modules.length} modules.`, type: 'info' }
-          ]);
+        // Helper to write files to the browser folder handle
+        const writeWorkspacePhysicalFiles = async () => {
+          if (dirHandle) {
+            const constContent = `# Project Architecture Constitution\n# Workspace: ${compiled.projectName}\n\n1. Core Architectural Constraints\n- Modularity Type: ${compiled.architecture}\n- Execution Stack: ${compiled.stackLabel}\n\n2. Invariant Gates\n` + compiled.constitution.map((c, i) => `${i+1}. [${c.rule}] - Severity: ${c.severity}\n   Rule: ${c.description}`).join('\n\n');
+            await writeLocalWorkspaceFile(dirHandle, 'Constitution.md', constContent);
 
-          setFlowStage('dashboard');
-          setHasInitialized(true);
+            const adrsContent = compiled.adrs.map(a => `# ${a.id}: ${a.title}\n\n**Status:** ${a.status}\n\n**Context:** ${a.context}\n\n**Decision:** ${a.decision}`).join('\n\n');
+            await writeLocalWorkspaceFile(dirHandle, 'ADRs.md', adrsContent);
+
+            await writeLocalWorkspaceFile(dirHandle, 'backlog.json', JSON.stringify(compiled.backlog, null, 2));
+            await writeLocalWorkspaceFile(dirHandle, 'roadmap.json', JSON.stringify(compiled.roadmap, null, 2));
+
+            const initialDriftedCode = `import { pg } from '../lib/db';\n\n// Warning: Raw Database connection bypasses the repository pattern\nexport function executeRawQuery(sql: string) {\n  return pg.query(sql); // Unsanctioned bypass!\n}\n`;
+            await writeLocalWorkspaceFile(dirHandle, 'packages/core/src/db/raw-query.ts', initialDriftedCode);
+            
+            compiled.driftPhysical = initialDriftedCode;
+            compiled.driftFile = 'packages/core/src/db/raw-query.ts';
+            setDriftStatus('drift');
+            setScore(820);
+          }
+        };
+
+        writeWorkspacePhysicalFiles().finally(() => {
+          // Fetch physical files mapping & real workspace details if available
+          Promise.all([
+            fetch('/api/workspace').then(res => res.json()).catch(() => null),
+            fetch('/api/audit').then(res => res.json()).catch(() => null)
+          ]).then(([workData, auditData]) => {
+            if (workData && workData.isLocal) {
+              compiled.projectName = workData.projectName;
+              compiled.description = workData.description;
+              if (workData.modules && workData.modules.length > 0) {
+                compiled.modules = workData.modules;
+              }
+            }
+            if (!dirHandle && auditData && auditData.physicalCode) {
+              compiled.driftPhysical = auditData.physicalCode;
+              compiled.driftFile = auditData.filePath;
+              compiled.driftContract = auditData.contractCode;
+              compiled.driftResolved = auditData.driftResolved;
+              setDriftStatus(auditData.driftStatus);
+              if (auditData.driftStatus === 'clean') {
+                setScore(1000);
+              } else {
+                setScore(820);
+              }
+            }
+          }).catch(err => {
+            console.warn('API routes bypass (local execution error):', err);
+          }).finally(() => {
+            setProfile(compiled);
+            
+            // Feed initial logs in console
+            const now = new Date().toLocaleTimeString();
+            setLogs([
+              { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
+              { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiled.projectName}. Stack: ${compiled.stackLabel}`, type: 'info' },
+              { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to ${compiled.modules.length} modules.`, type: 'info' }
+            ]);
+
+            setFlowStage('dashboard');
+            setHasInitialized(true);
+          });
         });
       }
     }, 600);
@@ -714,13 +739,20 @@ export default function Page() {
       { time: now, tag: 'AUDIT', text: `Running AST refactor engine on physical file ${profile.driftFile}...`, type: 'info' }
     ]);
 
+    const cleanResolvedCode = `import { supabase } from '../lib/supabase';\n\nexport class UserRepository implements IUserRepository {\n  async findById(id: string): Promise<User | null> {\n    const { data, error } = await supabase.from('users').select('*').eq('id', id).single();\n    if (error || !data) return null;\n    return data as User;\n  }\n  async save(user: User): Promise<void> {\n    await supabase.from('users').upsert(user);\n  }\n}\n`;
+
     try {
-      const res = await fetch('/api/audit', { method: 'POST' });
-      if (res.ok) {
-        const auditRes = await fetch('/api/audit');
-        if (auditRes.ok) {
-          const auditData = await auditRes.json();
-          setProfile((prev) => prev ? { ...prev, driftPhysical: auditData.physicalCode } : null);
+      if (dirHandle) {
+        await writeLocalWorkspaceFile(dirHandle, 'packages/core/src/db/raw-query.ts', cleanResolvedCode);
+        setProfile((prev) => prev ? { ...prev, driftPhysical: cleanResolvedCode } : null);
+      } else {
+        const res = await fetch('/api/audit', { method: 'POST' });
+        if (res.ok) {
+          const auditRes = await fetch('/api/audit');
+          if (auditRes.ok) {
+            const auditData = await auditRes.json();
+            setProfile((prev) => prev ? { ...prev, driftPhysical: auditData.physicalCode } : null);
+          }
         }
       }
     } catch (e) {
@@ -844,6 +876,51 @@ export default function Page() {
     }
   };
 
+  // DIRECTORY ACCESS CONTROLLER (FILE SYSTEM ACCESS API)
+  const connectLocalFolder = async () => {
+    try {
+      if (!(window as any).showDirectoryPicker) {
+        alert('Seu navegador não suporta a API de Acesso ao Sistema de Arquivos (File System Access API). Use o Google Chrome ou Microsoft Edge para conectar pastas locais diretamente.');
+        return;
+      }
+      const handle = await (window as any).showDirectoryPicker({
+        mode: 'readwrite'
+      });
+      setDirHandle(handle);
+      
+      try {
+        const pkgHandle = await handle.getFileHandle('package.json');
+        const pkgFile = await pkgHandle.getFile();
+        const pkgText = await pkgFile.text();
+        const pkgJson = JSON.parse(pkgText);
+        if (pkgJson.name) setProjectName(pkgJson.name);
+        if (pkgJson.description) setProjectDesc(pkgJson.description);
+      } catch (e) {
+        console.log('No package.json found in folder.');
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        alert('Erro ao conectar pasta local: ' + err.message);
+      }
+    }
+  };
+
+  const writeLocalWorkspaceFile = async (handle: any, relativePath: string, content: string) => {
+    try {
+      const parts = relativePath.split('/');
+      let currentDir = handle;
+      for (let i = 0; i < parts.length - 1; i++) {
+        currentDir = await currentDir.getDirectoryHandle(parts[i], { create: true });
+      }
+      const fileHandle = await currentDir.getFileHandle(parts[parts.length - 1], { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      console.warn('Error writing local file:', relativePath, err);
+    }
+  };
+
   return (
     <div className="crt-flicker" style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <div className="blueprint-grid" />
@@ -885,6 +962,29 @@ export default function Page() {
                 <button className="tactical-btn" onClick={() => handlePreFill('game')}>
                   [ <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px', verticalAlign: 'middle', display: 'inline-block' }}><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/></svg> Game Lobby (Go) ]
                 </button>
+              </div>
+
+              {/* CONNECT LOCAL DIRECTORY LINK */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', border: '1px solid var(--border-color)', padding: '12px', background: 'var(--bg-tertiary)' }}>
+                <button 
+                  type="button" 
+                  className="tactical-btn" 
+                  onClick={connectLocalFolder} 
+                  style={{ 
+                    padding: '8px 12px', 
+                    fontSize: '11px', 
+                    borderColor: dirHandle ? 'var(--accent-green)' : 'var(--accent-blue)',
+                    color: dirHandle ? 'var(--accent-green)' : 'var(--accent-blue)',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {dirHandle ? `[ 📁 CONECTADO: ${dirHandle.name.toUpperCase()} ]` : '[ 📁 CONECTAR PASTA LOCAL DO PROJETO ]'}
+                </button>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)', flex: 1 }}>
+                  {dirHandle 
+                    ? 'Atlas criará a Constituição, Backlog e arquivos de código diretamente nesta pasta.' 
+                    : 'Permite que a interface web na Vercel escreva e audite arquivos diretamente no seu disco local.'}
+                </span>
               </div>
 
               <form onSubmit={startAlignment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1069,12 +1169,25 @@ export default function Page() {
             </div>
 
             <div className="header-controls" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div className="header-meta-info" style={{ fontSize: '11px', display: 'flex', gap: '12px', color: 'var(--text-muted)' }}>
+              <div className="header-meta-info" style={{ fontSize: '11px', display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--text-muted)' }}>
                 <span>PROJECT: <strong>{profile.projectName.toUpperCase()}</strong></span>
                 <span>STACK: <strong>{profile.stackLabel.toUpperCase()}</strong></span>
                 <span style={{ color: isSynced ? 'var(--accent-green)' : 'var(--accent-orange)' }}>
                   {isSynced ? '[ SUPABASE_ONLINE ]' : '[ LOCAL_FALLBACK ]'}
                 </span>
+                <button 
+                  className="tactical-btn" 
+                  onClick={connectLocalFolder} 
+                  style={{ 
+                    padding: '2px 8px', 
+                    fontSize: '9px', 
+                    height: '22px',
+                    borderColor: dirHandle ? 'var(--accent-green)' : 'var(--accent-blue)',
+                    color: dirHandle ? 'var(--accent-green)' : 'var(--accent-blue)' 
+                  }}
+                >
+                  {dirHandle ? `[ 📁 LOCAL: ${dirHandle.name.toUpperCase()} ]` : '[ 📁 CONECTAR PASTA LOCAL ]'}
+                </button>
               </div>
 
               {/* SCORE */}
