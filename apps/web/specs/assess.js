@@ -8,6 +8,10 @@ const path = require('path');
   const context = await browser.newContext();
   const page = await context.newPage();
 
+  // Register console logs
+  page.on('console', msg => console.log(`BROWSER LOG: [${msg.type()}] ${msg.text()}`));
+  page.on('pageerror', err => console.log(`BROWSER EXCEPTION: ${err.message}`));
+
   const artifactDir = '/root/.gemini/antigravity-cli/brain/de91f4cd-72fd-4ff6-9bf6-e56bda757ba7';
 
   const url = 'https://atlas-web-console-red.vercel.app';
