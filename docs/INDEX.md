@@ -73,6 +73,7 @@ RFCs specify Atlas protocols, formats, and systems in detail.
 | [RFC-011](rfc/RFC-011-user-experience-specification.md) | Atlas User Experience (UX) Specification | ✅ Final |
 | [RFC-012](rfc/RFC-012-autonomous-engineering-system.md) | Atlas Autonomous Engineering System (AAES) | ✅ Final |
 | [RFC-013](rfc/RFC-013-evolution-framework.md) | Atlas Evolution Framework (AEF) | ✅ Final |
+| [RFC-014](rfc/RFC-014-quality-intelligence-system.md) | Atlas Quality Intelligence System (AQIS) | ✅ Final |
 
 ---
 
