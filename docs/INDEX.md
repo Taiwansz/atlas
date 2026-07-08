@@ -134,6 +134,8 @@ RFCs specify Atlas protocols, formats, and systems in detail.
 | Document | Description |
 |----------|-------------|
 | [Roadmap](ROADMAP.md) | Multi-year product roadmap |
+| [Backlog](BACKLOG.md) | Product Backlog of Sprints & Stories |
+| [Implementation Plan](IMPLEMENTATION_PLAN.md) | Project Implementation Plan & MVP |
 | [Contributing](guides/CONTRIBUTING.md) | How to contribute |
 
 ---

@@ -1,73 +1,76 @@
-# Atlas Product & Technical Roadmap (2026 - 2027)
+# Atlas Product & Technical Roadmap (2026)
 
 > **Document Status:** Authoritative Reference  
-> **Version:** 1.0.0  
-> **Last Updated:** 2026-07-06  
-> **Owner:** Atlas Leadership Team  
+> **Version:** 2.0.0  
+> **Last Updated:** 2026-07-08  
+> **Owner:** Atlas Leadership & Architecture Team  
 
 ---
 
-## 1. Multi-Year Horizon Overview
+## 1. Visão de Linha do Tempo
 
-This roadmap details the strategic development phases of the Atlas Engineering Operating System from foundation layout to enterprise-grade marketplace release.
+O desenvolvimento do Atlas Engineering Operating System está estruturado em marcos de entrega incrementais, progredindo do núcleo de infraestrutura até a liberação do marketplace corporativo.
 
 ```
-       Phase 1               Phase 2               Phase 3               Phase 4
-     FOUNDATION        ENGINES & MEMORY      AUDIT & ORCHESTRATE     SCALE & MARKETPLACE
-    ┌──────────┐         ┌──────────┐           ┌──────────┐         ┌──────────┐
-    │ Q1 2026  │ ──────▶ │ Q2-Q3 '26│ ────────▶ │ Q4 '26 - │ ──────▶ │ Q2-Q4 '27│
-    │          │         │          │           │ Q1 2027  │         │          │
-    └──────────┘         └──────────┘           └──────────┘         └──────────┘
+       Milestone 1             Milestone 2             Milestone 3             Milestone 4
+     CORE FOUNDATION         MVP ENGINE RELEASE      INTELLIGENT INTAKE     ORCHESTRATION & SCALE
+     ┌─────────────┐         ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+     │  Sprint 1   │ ──────▶ │ Sprints 2-3 │ ──────▶ │ Sprints 4-5 │ ──────▶ │ Sprints 6+  │
+     │  Jul 2026   │         │  Ago 2026   │         │  Set 2026   │         │  Out 2026   │
+     └─────────────┘         └─────────────┘         └─────────────┘         └─────────────┘
 ```
 
 ---
 
-## 2. Milestone Registry
+## 2. Registro de Marcos (Milestones)
 
-### Milestone 1: Foundation & Core Protocols (Q1 2026)
-- **Objective:** Establish the philosophical, structural, and contract-level base of the monorepo.
-- **Key Deliverables:**
-  - Complete foundation documents (Vision, Manifesto, Constitution, Principles, Values).
-  - Define inter-service gRPC API contracts and Protobuf schemas.
-  - Deliver the Rust-based `agy` CLI CLI structure with mock validation logic.
-  - Complete the monorepo workspace configuration using Nx and PNPM.
-- **Success Criteria:** CI pipeline executes green on empty builds; CLI compiles with zero external runtime dependencies.
-
-### Milestone 2: Blueprint & Project Memory Engine (Q2 - Q3 2026)
-- **Objective:** Build the core architecture state machine.
-- **Key Deliverables:**
-  - Launch the **Blueprint Engine** capable of parsing, validating, and locking `atlas.blueprint.yaml`.
-  - Implement the **Memory Engine** using Neo4j to build semantic relationship graphs.
-  - Deliver automated **ADR compilation** tracking changes between blueprint versions.
-  - Launch the **Requirement Discovery Engine** containing the terminal-based Socratic interview interface.
-- **Success Criteria:** Socratic intake outputs a requirement JSON that can be compiled into a validated blueprint lockfile.
-
-### Milestone 3: Audit, Scoring, and Agent Orchestrator (Q4 2026 - Q1 2027)
-- **Objective:** Enable continuous code generation and architectural enforcement.
-- **Key Deliverables:**
-  - Launch the **Technical Audit Engine** running AST checks to detect code drift.
-  - Implement the **Engineering Score Engine** calculating numeric project ratings.
-  - Build the **Agent Orchestrator** using LangGraph to run stateful multi-agent execution loops.
-  - Equip code generation agents with secure tool boundaries.
-- **Success Criteria:** Developer attempts to write undocumented code; the audit engine detects drift, fails the CI build, and prompts the user to update the blueprint.
-
-### Milestone 4: Simulation, Red Teaming, and Marketplace (Q2 - Q4 2027)
-- **Objective:** Deliver advanced operations, security sandboxing, and community ecosystem.
-- **Key Deliverables:**
-  - Deploy **gVisor sandboxing** for executing untrusted test code safely.
-  - Launch the **Simulation Engine** modeled in Firecracker microVMs.
-  - Implement the **Red Team Engine** simulating penetration attack runs.
-  - Expose the **Web Dashboard** portal showing live scores and logs.
-  - Launch the public **Plugin Marketplace** allowing third-party developers to publish extensions.
-- **Success Criteria:** Platform handles multi-tenant organizations; security tests block open redirects automatically.
+### Milestone 1: Core Foundation & Infrastructure (Julho 2026)
+* **Objetivo:** Estabelecer a infraestrutura de baixo acoplamento e alto padrão do monorepo, sem lógica de negócio.
+* **Escopo (Sprint 1):**
+  * Configuração unificada do monorepo Nx com regras de barreira de pacotes.
+  * Implementação de container de injeção de dependência local e tratamento de exceções estruturado.
+  * Logging JSON estruturado e telemetria OpenTelemetry (Tracing local).
+  * Barramento de eventos local assíncrono em memória (`InMemoryEventBus`).
+  * Pipelines básicos de CI/CD para validação automática de qualidade no GitHub Actions.
+* **Critério de Sucesso:** A suite de testes unitários da infraestrutura roda com sucesso e o build é concluído com zero warnings.
 
 ---
 
-## 3. High-Priority Risk Mitigation Plan
+### Milestone 2: MVP Release - Blueprint & Static Audit (Agosto 2026)
+* **Objetivo:** Entregar a primeira versão funcional e demonstrável do loop de governança arquitetural do Atlas.
+* **Escopo (Sprints 2 - 3):**
+  * Interface CLI `agy` com comandos básicos de execução e validação.
+  * Motor de Blueprint capaz de validar sintaxe e assinar arquivos `atlas.blueprint.yaml`.
+  * Motor de Auditoria estática comparando a AST de projetos TypeScript locais com as declarações do Blueprint.
+  * Cálculo dinâmico simplificado do Engineering Score (RFC-004), disparando penalidades por drifts de código.
+* **Critério de Sucesso:** Um desenvolvedor tenta criar uma classe não listada no Blueprint; o comando `agy validate --drift-check` falha localmente e bloqueia a integração.
 
-1. **LLM Non-Determinism:** LLM completions can vary, making automated audits unstable.
-   - *Mitigation:* We wrap model invocations with JSON schema enforcement and run deterministic AST comparisons instead of relying purely on natural language code checks.
-2. **Neo4j Transaction Latency:** High graph traversal depth on large codebases could slow down CLI lookups.
-   - *Mitigation:* Implement read-through caching in Redis and index key relation paths.
-3. **Sandbox Escape Vulnerability:** Unsecure user-submitted code could escape container boundaries.
-   - *Mitigation:* Dual-isolate execution using gVisor inside private Kubernetes namespaces with restricted node access privileges.
+---
+
+### Milestone 3: Intelligent Intake & Semantic Memory (Setembro 2026)
+* **Objetivo:** Acoplar inteligência contextual à captura de requisitos de produto e persistir o conhecimento.
+* **Escopo (Sprints 4 - 5):**
+  * Interface Socratic Intake via CLI, guiando o usuário por questionários técnicos adaptativos.
+  * Estruturação do arquivo `requirements.json` resultante de descobertas.
+  * Integração com bancos vetoriais (pgvector/Qdrant) para busca e injeção de memórias episódicas e semanticamente consolidadas.
+* **Critério de Sucesso:** O input socrático gera um plano de requisitos Zod-validado capaz de estruturar o rascunho inicial de um Blueprint.
+
+---
+
+### Milestone 4: Orchestration, Simulation & Security (Outubro 2026 em diante)
+* **Objetivo:** Ativar a equipe de múltiplos agentes inteligentes operando em paralelo com segurança corporativa.
+* **Escopo (Sprints 6+):**
+  * Orquestrador de Agentes usando LangGraph e protocolo de comunicação AACP.
+  * Sandbox de simulação de carga (K6) e modelagem comportamental.
+  * Red Team Engine simulando vetores de ataque em ambiente isolado.
+  * Web Dashboard unificado contendo o mapa de arquitetura e histórico de evolução do Engineering Score.
+* **Critério de Sucesso:** Múltiplos agentes implementam módulos concorrentemente em sandboxes separadas, e o Maestro resolve divergências de design via Consenso Socrático sem quebras de build.
+
+---
+
+## 3. Gestão de Riscos Tecnológicos no Roadmap
+
+1. **Latência de Processamento por IA:** O acúmulo de requisições de agentes paralelos no LangGraph pode tornar as sprints lentas e caras.
+   * *Mitigation:* Cache rigoroso de respostas de IA baseado no hash da tarefa e injeção seletiva de contexto de memória para economizar tokens.
+2. **Desvio de Nomenclatura no Código Físico:** IAs podem gerar variáveis ou arquivos fora das convenções de nomenclatura do AES.
+   * *Mitigation:* Validação estática de linter atrelada ao gancho de pré-commit do Git (Husky) bloqueando alterações fora das convenções.
