@@ -883,6 +883,48 @@ export default function Page() {
 
   return (
     <div className="crt-flicker" style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      <style>{`
+        .workspace-container {
+          display: flex;
+          flex: 1;
+          overflow: hidden;
+          flex-direction: row;
+        }
+        .left-pane {
+          width: 45%;
+          border-right: 1px solid var(--border-color);
+          display: flex;
+          flex-direction: column;
+          background: var(--bg-secondary);
+          padding: 20px;
+          overflow-y: auto;
+        }
+        .right-pane {
+          width: 55%;
+          display: flex;
+          flex-direction: column;
+          padding: 20px;
+          overflow-y: auto;
+        }
+        @media (max-width: 768px) {
+          .workspace-container {
+            flex-direction: column;
+            overflow-y: auto;
+          }
+          .left-pane {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            height: auto;
+            overflow-y: visible;
+          }
+          .right-pane {
+            width: 100%;
+            height: auto;
+            overflow-y: visible;
+          }
+        }
+      `}</style>
       <div className="blueprint-grid" />
       <div className="crt-overlay" />
 
@@ -1125,10 +1167,10 @@ export default function Page() {
               </header>
 
               {/* MAIN CONTENT SPACE */}
-              <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              <div className="workspace-container">
                 
                 {/* LEFT CONTEXT: CHAT AND CONTROL MODULE */}
-                <div style={{ width: '45%', borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', padding: '20px', overflowY: 'auto' }}>
+                <div className="left-pane">
                   
                   {flowStage === 'discovery' && (
                     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
@@ -1286,7 +1328,7 @@ export default function Page() {
                 </div>
 
                 {/* RIGHT CONTEXT: REAL-TIME EVOLVING WORKSPACE PANELS */}
-                <div style={{ width: '55%', display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto' }}>
+                <div className="right-pane">
                   
                   {/* TAB NAVIGATION */}
                   <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', marginBottom: '16px' }}>

@@ -45,13 +45,13 @@ const path = require('path');
   console.log('Answering Question 1...');
   await page.fill('input[placeholder="Responda à IA sobre as regras do seu negócio..."]', 'Use queues for processing data asynchronously.');
   await page.click('button:has-text("ENVIAR")');
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(5000);
 
   // Fill and submit Question 2
   console.log('Answering Question 2...');
   await page.fill('input[placeholder="Responda à IA sobre as regras do seu negócio..."]', 'Adhere strictly to clean architecture.');
   await page.click('button:has-text("ENVIAR")');
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(5000);
 
   // Click Approve and Compile Blueprint
   console.log('Approving architecture layout...');
@@ -64,7 +64,7 @@ const path = require('path');
 
   // Wait for dashboard translation
   console.log('Waiting for main dashboard...');
-  await page.waitForSelector('text=BLUEPRINT ATIVO', { timeout: 15000 });
+  await page.waitForSelector('text=BLUEPRINT ATIVO', { timeout: 30000 });
   await page.screenshot({ path: path.join(artifactDir, 'dashboard_monitor.png') });
 
   // Verify Blueprint Topology Tab

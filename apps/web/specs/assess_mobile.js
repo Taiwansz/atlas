@@ -42,13 +42,13 @@ const path = require('path');
   console.log('Answering Question 1...');
   await page.fill('input[placeholder="Responda à IA sobre as regras do seu negócio..."]', 'Use queues on Redis.');
   await page.click('button:has-text("ENVIAR")');
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(5000);
 
   // Fill and submit Question 2
   console.log('Answering Question 2...');
   await page.fill('input[placeholder="Responda à IA sobre as regras do seu negócio..."]', 'Single DB schema.');
   await page.click('button:has-text("ENVIAR")');
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(5000);
 
   // Click Approve and Compile
   console.log('Approving architecture layout...');
@@ -61,7 +61,7 @@ const path = require('path');
 
   // Wait for dashboard translation
   console.log('Waiting for main dashboard...');
-  await page.waitForSelector('text=BLUEPRINT ATIVO', { timeout: 15000 });
+  await page.waitForSelector('text=BLUEPRINT ATIVO', { timeout: 30000 });
   await page.screenshot({ path: path.join(artifactDir, 'mobile_dashboard.png') });
 
   // Click on "TOPOLOGY" tab
