@@ -1173,7 +1173,7 @@ export default function Page() {
                 <div className="left-pane">
                   
                   {flowStage === 'discovery' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '450px', gap: '16px' }}>
                       <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
                         <span style={{ fontSize: '10px', color: 'var(--accent-orange)', fontWeight: 'bold' }}>// DISCOVERY CHAT SESSION</span>
                         <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '4px 0 0 0' }}>ALINHAMENTO COGNITIVO COM A IA</h2>
@@ -1232,7 +1232,7 @@ export default function Page() {
                   )}
 
                   {flowStage === 'compiling' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minHeight: '400px' }}>
                       <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
                         <span style={{ fontSize: '10px', color: 'var(--accent-blue)', fontWeight: 'bold' }}>// COMPILER ACTIVE</span>
                         <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '4px 0 0 0' }}>COMPILANDO ARQUITETURA... {compilationProgress}%</h2>
@@ -1251,7 +1251,7 @@ export default function Page() {
                   )}
 
                   {flowStage === 'dashboard' && profile && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minHeight: '450px' }}>
                       <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
                         <span style={{ fontSize: '10px', color: 'var(--accent-green)', fontWeight: 'bold' }}>// DEPLOYED & COMPILED</span>
                         <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '4px 0 0 0' }}>BLUEPRINT ATIVO</h2>
