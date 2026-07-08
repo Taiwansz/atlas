@@ -367,8 +367,8 @@ export default function Page() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ fontSize: '11px', display: 'flex', gap: '12px', color: 'var(--text-muted)' }}>
+            <div className="header-controls" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div className="header-meta-info" style={{ fontSize: '11px', display: 'flex', gap: '12px', color: 'var(--text-muted)' }}>
                 <span>PROJECT: <strong>{projectName.toUpperCase()}</strong></span>
                 <span>STACK: <strong>{projectStack.toUpperCase()}</strong></span>
               </div>
@@ -390,10 +390,10 @@ export default function Page() {
           </header>
 
           {/* MAIN BODY AREA */}
-          <main style={{ flex: 1, display: 'grid', gridTemplateColumns: '240px 1fr', overflow: 'hidden' }}>
+          <main className="dashboard-layout">
             
             {/* SIDE PANEL NAVIGATION */}
-            <aside style={{ borderRight: '2px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <aside className="dashboard-sidebar">
               <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '12px' }}>
                 [ 00. CONTROLLERS ]
               </div>
@@ -440,14 +440,14 @@ export default function Page() {
             </aside>
 
             {/* SCREEN VIEWPORT */}
-            <section style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <section className="dashboard-viewport">
               
               {/* TAB 01: RUNTIME MONITOR */}
               {activeTab === 'monitor' && (
-                <div style={{ display: 'grid', gridTemplateRows: '1fr 220px', height: '100%' }}>
+                <div className="monitor-grid-container">
                   
                   {/* TOP ROW: WORKSPACE & TASK QUEUE */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', borderBottom: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                  <div className="monitor-top-row">
                     
                     {/* WORKSPACE PROFILE */}
                     <div className="console-panel" style={{ border: 0 }}>
@@ -538,7 +538,7 @@ export default function Page() {
 
               {/* TAB 02: BLUEPRINT CONTRACTS */}
               {activeTab === 'blueprint' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', height: '100%' }}>
+                <div className="blueprint-grid-container">
                   
                   {/* TOPOLOGY GRAPH */}
                   <div className="console-panel" style={{ border: 0 }}>
@@ -633,7 +633,7 @@ allowedEgress: []`}
 
               {/* TAB 03: DRIFT AUDITOR */}
               {activeTab === 'audit' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', height: '100%' }}>
+                <div className="audit-grid-container">
                   
                   {/* RADAR CHART PANEL */}
                   <div className="console-panel" style={{ border: 0 }}>
@@ -687,7 +687,7 @@ allowedEgress: []`}
                             </button>
                           </div>
 
-                          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontFamily: 'monospace', fontSize: '11px' }}>
+                          <div className="drift-compare-grid">
                             <div style={{ border: '1px solid var(--border-color)', background: 'var(--bg-primary)', padding: '12px', overflow: 'auto' }}>
                               <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '6px', marginBottom: '8px', color: 'var(--text-muted)' }}>CONTRACT SPECIFICATION</div>
                               <div>{`// File must comply with IRepository schema
@@ -721,7 +721,7 @@ export function executeRawQuery(sql: string) {
 
               {/* TAB 04: EVOLUTION RADAR */}
               {activeTab === 'radar' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', height: '100%' }}>
+                <div className="radar-grid-container">
                   
                   {/* TECHNOLOGY RADAR */}
                   <div className="console-panel" style={{ border: 0 }}>
@@ -798,6 +798,22 @@ export function executeRawQuery(sql: string) {
             </section>
 
           </main>
+
+          {/* MOBILE BOTTOM NAVIGATION */}
+          <nav className="mobile-bottom-nav">
+            <button className={activeTab === 'monitor' ? 'active' : ''} onClick={() => setActiveTab('monitor')}>
+              <span>MONITOR</span>
+            </button>
+            <button className={activeTab === 'blueprint' ? 'active' : ''} onClick={() => setActiveTab('blueprint')}>
+              <span>BLUEPRINT</span>
+            </button>
+            <button className={activeTab === 'audit' ? 'active' : ''} onClick={() => setActiveTab('audit')}>
+              <span>AUDIT</span>
+            </button>
+            <button className={activeTab === 'radar' ? 'active' : ''} onClick={() => setActiveTab('radar')}>
+              <span>EVOLUTION</span>
+            </button>
+          </nav>
 
         </div>
       )}

@@ -387,3 +387,195 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-focus);
 }
+
+/* =============================================================================
+   RESPONSIVE LAYOUT CLASSES
+   ============================================================================= */
+
+.dashboard-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  overflow: hidden;
+}
+
+.dashboard-sidebar {
+  border-right: 2px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-viewport {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.monitor-grid-container {
+  display: grid;
+  grid-template-rows: 1fr 220px;
+  height: 100%;
+}
+
+.monitor-top-row {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.blueprint-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  height: 100%;
+}
+
+.audit-grid-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100%;
+}
+
+.drift-compare-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.radar-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  height: 100%;
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+/* =============================================================================
+   MOBILE MEDIA QUERY (APP STYLE)
+   ============================================================================= */
+@media (max-width: 768px) {
+  html, body {
+    font-size: 12px; /* Slightly smaller typography for compact mobile screens */
+  }
+
+  .tactical-header {
+    height: auto;
+    min-height: 50px;
+    padding: 10px 16px;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .header-meta-info {
+    display: none !important; /* Hide secondary debug metadata to prevent wrapping */
+  }
+
+  .header-controls {
+    gap: 10px !important;
+  }
+
+  .tactical-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 50px);
+  }
+
+  .dashboard-sidebar {
+    display: none !important; /* Hide desktop side panel */
+  }
+
+  .dashboard-viewport {
+    height: 100%;
+    padding-bottom: 60px; /* Leave space for bottom tab navigation */
+  }
+
+  .monitor-grid-container {
+    grid-template-rows: 1fr 240px; /* Adjust terminal section height on mobile */
+  }
+
+  .monitor-top-row {
+    grid-template-columns: 1fr;
+    border-bottom: none;
+    overflow-y: auto;
+  }
+
+  .blueprint-grid-container {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .audit-grid-container {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .drift-compare-grid {
+    grid-template-columns: 1fr;
+    flex: none;
+  }
+
+  .radar-grid-container {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  /* Make Blueprint SVG responsive */
+  .blueprint-grid-container svg {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* MOBILE TAB NAV (NATIVE APP STYLE) */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: var(--bg-secondary);
+    border-top: 2px solid var(--border-color);
+    z-index: 100;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 10px;
+  }
+
+  .mobile-bottom-nav button {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    flex: 1;
+    cursor: pointer;
+  }
+
+  .mobile-bottom-nav button.active {
+    color: var(--accent-blue);
+    background-color: var(--bg-tertiary);
+    border-top: 2px solid var(--accent-blue);
+    margin-top: -2px; /* Align border cleanly */
+  }
+}
