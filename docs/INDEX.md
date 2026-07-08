@@ -68,6 +68,8 @@ RFCs specify Atlas protocols, formats, and systems in detail.
 | [RFC-006](rfc/RFC-006-agent-communication-protocol.md) | Agent Communication Protocol | ✅ Final |
 | [RFC-007](rfc/RFC-007-plugin-system.md) | Plugin System Specification | ✅ Final |
 | [RFC-008](rfc/RFC-008-ai-provider-abstraction.md) | AI Provider Abstraction | ✅ Final |
+| [RFC-009](rfc/RFC-009-cognitive-system.md) | Atlas Cognitive System Specification | ✅ Final |
+| [RFC-010](rfc/RFC-010-engineering-standard.md) | Atlas Engineering Standard (AES) | ✅ Final |
 
 ---
 
