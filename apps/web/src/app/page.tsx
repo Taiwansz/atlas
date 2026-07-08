@@ -543,19 +543,64 @@ export default function Page() {
   };
 
   // STEP 2: HANDLE CHAT RESPONSE
-  const handleChatSubmit = (e: React.FormEvent) => {
+  const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userAnswerInput.trim()) return;
 
     const userText = userAnswerInput.trim();
-    setChatMessages((prev) => [...prev, { sender: 'user', text: userText }]);
+    const updatedMessages = [...chatMessages, { sender: 'user' as const, text: userText }];
+    setChatMessages(updatedMessages);
     setUserAnswerInput('');
 
-    // Process step
-    setTimeout(() => {
+    // Format chat messages for NVIDIA LLM API route
+    const mapped = updatedMessages.map(msg => ({
+      role: msg.sender === 'user' ? ('user' as const) : ('assistant' as const),
+      content: msg.text
+    }));
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: projectIdea,
+          projectStack,
+          messages: mapped
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data.reply;
+        
+        if (reply.includes('CONVERT_TO_COMPILER_NOW')) {
+          setChatMessages((prev) => [
+            ...prev,
+            { sender: 'ai', text: 'Todas as diretrizes foram compiladas. Alinhamento de engenharia concluído com sucesso!' },
+            { sender: 'ai', text: 'Iniciando compilador de Blueprints...' }
+          ]);
+          setTimeout(() => {
+            triggerCompilation();
+          }, 1500);
+        } else {
+          setChatMessages((prev) => [
+            ...prev,
+            { sender: 'ai', text: reply }
+          ]);
+          // Stash answers locally
+          if (interviewStep === 1) {
+            setProjectAnswers((prev) => ({ ...prev, q1: userText }));
+            setInterviewStep(2);
+          } else {
+            setProjectAnswers((prev) => ({ ...prev, q2: userText }));
+          }
+        }
+      } else {
+        throw new Error('API route failure');
+      }
+    } catch (e) {
+      console.warn('API error during chat alignment, using local fallback:', e);
       if (interviewStep === 1) {
         setProjectAnswers((prev) => ({ ...prev, q1: userText }));
-        
         let secondQuestion = '';
         if (projectStack === 'rust-actix') {
           secondQuestion = 'Excelente. E quanto à autenticação de sessões? Devemos implementar tokens JWT auto-contidos decodificados em memória, ou validar sessões ativas no banco Redis a cada requisição?';
@@ -564,7 +609,6 @@ export default function Page() {
         } else {
           secondQuestion = 'Entendido. A configuração de variáveis de ambiente deve seguir um modelo multi-tenant isolado por banco de dados ou compartilharemos um esquema relacional unificado?';
         }
-
         setChatMessages((prev) => [
           ...prev,
           { sender: 'ai', text: 'Entendi o seu ponto. Registrado na especificação arquitetural.' },
@@ -578,13 +622,11 @@ export default function Page() {
           { sender: 'ai', text: 'Todas as diretrizes foram compiladas. Alinhamento de engenharia concluído com sucesso!' },
           { sender: 'ai', text: 'Iniciando compilador de Blueprints...' }
         ]);
-        
-        // Move to compilation state
         setTimeout(() => {
           triggerCompilation();
         }, 1500);
       }
-    }, 800);
+    }
   };
 
   // STEP 3: RUN COMPILER PROGRESS SYSTEM
@@ -613,7 +655,6 @@ export default function Page() {
           setCompilationLogs((prev) => [...prev, `[COMPILER] ${active.text}`]);
           
           if (active.pct === 95) {
-            // Attempt Supabase write in background
             saveProfileToSupabase();
           }
         }
@@ -621,78 +662,63 @@ export default function Page() {
       } else {
         clearInterval(interval);
         
-        // Compile actual data profile based on user inputs
-        const compiled = generateProjectProfile(
-          projectName,
-          projectStack,
-          projectDesc,
-          projectIdea,
-          projectAnswers
-        );
-
-        // Helper to write files to the browser folder handle
-        const writeWorkspacePhysicalFiles = async () => {
+        // Compile actual data profile from NVIDIA LLM API!
+        fetch('/api/compile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectName,
+            projectStack,
+            projectDesc,
+            projectIdea,
+            answers: projectAnswers
+          })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('Compile API error');
+          return res.json();
+        })
+        .then(async (compiled) => {
           if (dirHandle) {
-            const constContent = `# Project Architecture Constitution\n# Workspace: ${compiled.projectName}\n\n1. Core Architectural Constraints\n- Modularity Type: ${compiled.architecture}\n- Execution Stack: ${compiled.stackLabel}\n\n2. Invariant Gates\n` + compiled.constitution.map((c, i) => `${i+1}. [${c.rule}] - Severity: ${c.severity}\n   Rule: ${c.description}`).join('\n\n');
+            const constContent = `# Project Architecture Constitution\n# Workspace: ${compiled.projectName}\n\n1. Core Architectural Constraints\n- Modularity Type: ${compiled.architecture}\n- Execution Stack: ${compiled.stackLabel}\n\n2. Invariant Gates\n` + compiled.constitution.map((c: any, i: number) => `${i+1}. [${c.rule}] - Severity: ${c.severity}\n   Rule: ${c.description}`).join('\n\n');
             await writeLocalWorkspaceFile(dirHandle, 'Constitution.md', constContent);
 
-            const adrsContent = compiled.adrs.map(a => `# ${a.id}: ${a.title}\n\n**Status:** ${a.status}\n\n**Context:** ${a.context}\n\n**Decision:** ${a.decision}`).join('\n\n');
+            const adrsContent = compiled.adrs.map((a: any) => `# ${a.id}: ${a.title}\n\n**Status:** ${a.status}\n\n**Context:** ${a.context}\n\n**Decision:** ${a.decision}`).join('\n\n');
             await writeLocalWorkspaceFile(dirHandle, 'ADRs.md', adrsContent);
 
             await writeLocalWorkspaceFile(dirHandle, 'backlog.json', JSON.stringify(compiled.backlog, null, 2));
             await writeLocalWorkspaceFile(dirHandle, 'roadmap.json', JSON.stringify(compiled.roadmap, null, 2));
 
-            const initialDriftedCode = `import { pg } from '../lib/db';\n\n// Warning: Raw Database connection bypasses the repository pattern\nexport function executeRawQuery(sql: string) {\n  return pg.query(sql); // Unsanctioned bypass!\n}\n`;
-            await writeLocalWorkspaceFile(dirHandle, 'packages/core/src/db/raw-query.ts', initialDriftedCode);
-            
-            compiled.driftPhysical = initialDriftedCode;
-            compiled.driftFile = 'packages/core/src/db/raw-query.ts';
-            setDriftStatus('drift');
-            setScore(820);
+            await writeLocalWorkspaceFile(dirHandle, compiled.driftFile || 'packages/core/src/db/raw-query.ts', compiled.driftPhysical || '');
           }
-        };
 
-        writeWorkspacePhysicalFiles().finally(() => {
-          // Fetch physical files mapping & real workspace details if available
-          Promise.all([
-            fetch('/api/workspace').then(res => res.json()).catch(() => null),
-            fetch('/api/audit').then(res => res.json()).catch(() => null)
-          ]).then(([workData, auditData]) => {
-            if (workData && workData.isLocal) {
-              compiled.projectName = workData.projectName;
-              compiled.description = workData.description;
-              if (workData.modules && workData.modules.length > 0) {
-                compiled.modules = workData.modules;
-              }
-            }
-            if (!dirHandle && auditData && auditData.physicalCode) {
-              compiled.driftPhysical = auditData.physicalCode;
-              compiled.driftFile = auditData.filePath;
-              compiled.driftContract = auditData.contractCode;
-              compiled.driftResolved = auditData.driftResolved;
-              setDriftStatus(auditData.driftStatus);
-              if (auditData.driftStatus === 'clean') {
-                setScore(1000);
-              } else {
-                setScore(820);
-              }
-            }
-          }).catch(err => {
-            console.warn('API routes bypass (local execution error):', err);
-          }).finally(() => {
-            setProfile(compiled);
-            
-            // Feed initial logs in console
-            const now = new Date().toLocaleTimeString();
-            setLogs([
-              { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
-              { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiled.projectName}. Stack: ${compiled.stackLabel}`, type: 'info' },
-              { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to ${compiled.modules.length} modules.`, type: 'info' }
-            ]);
+          setProfile(compiled);
+          setDriftStatus(compiled.driftStatus || 'drift');
+          setScore(compiled.driftStatus === 'clean' ? 1000 : 820);
 
-            setFlowStage('dashboard');
-            setHasInitialized(true);
-          });
+          // Feed initial logs in console
+          const now = new Date().toLocaleTimeString();
+          setLogs([
+            { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
+            { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiled.projectName}. Stack: ${compiled.stackLabel}`, type: 'info' },
+            { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to modules.`, type: 'info' }
+          ]);
+        })
+        .catch(err => {
+          console.warn('Nvidia compiler failed, using local builder template:', err);
+          const compiledFallback = generateProjectProfile(projectName, projectStack, projectDesc, projectIdea, projectAnswers);
+          setProfile(compiledFallback);
+          
+          const now = new Date().toLocaleTimeString();
+          setLogs([
+            { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
+            { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiledFallback.projectName}. Stack: ${compiledFallback.stackLabel}`, type: 'info' },
+            { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to ${compiledFallback.modules.length} modules.`, type: 'info' }
+          ]);
+        })
+        .finally(() => {
+          setFlowStage('dashboard');
+          setHasInitialized(true);
         });
       }
     }, 600);
