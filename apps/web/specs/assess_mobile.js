@@ -10,7 +10,6 @@ const path = require('path');
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   
-  // Emulate iPhone 13
   const iPhone13 = devices['iPhone 13'];
   const context = await browser.newContext({
     ...iPhone13,
@@ -19,48 +18,64 @@ const path = require('path');
   });
   
   const page = await context.newPage();
-  const url = 'https://atlas-web-console-nbk8s1j4m-stdmatheus-5418s-projects.vercel.app';
+  const url = 'https://atlas-web-console-fx5ixxvna-stdmatheus-5418s-projects.vercel.app';
   
   console.log(`Navigating to mobile view: ${url}...`);
   await page.goto(url, { waitUntil: 'networkidle' });
 
-  // Take onboarding screenshot
-  const onboardingPath = path.join(artifactDir, 'mobile_onboarding.png');
-  console.log(`Taking mobile screenshot of onboarding to ${onboardingPath}...`);
-  await page.screenshot({ path: onboardingPath });
+  // Pre-fill template
+  console.log('Selecting pre-fill template on mobile...');
+  await page.click('text=🤖 AI Prompt');
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: path.join(artifactDir, 'mobile_onboarding.png') });
 
-  // Onboarding action: Fill and submit form
-  console.log('Filing onboarding form on mobile...');
-  await page.locator('input[type="text"]').first().fill('mobile-app-workspace');
-  await page.locator('input[type="text"]').last().fill('Mobile responsive app-like view');
-
+  // Submit form
   console.log('Submitting onboarding form...');
   await page.click('button[type="submit"]');
 
-  // Wait for transition to dashboard
-  console.log('Waiting for dashboard transition...');
-  await page.waitForSelector('text=ATLAS :', { timeout: 10000 });
+  // Wait for interview chat panel
+  console.log('Waiting for chat dialogue...');
+  await page.waitForSelector('text=DIALOGUE SESSION');
+  await page.screenshot({ path: path.join(artifactDir, 'mobile_interview.png') });
 
-  // Take dashboard monitor screenshot
-  const dashboardPath = path.join(artifactDir, 'mobile_dashboard.png');
-  console.log(`Taking mobile screenshot of dashboard monitor to ${dashboardPath}...`);
-  await page.screenshot({ path: dashboardPath });
+  // Fill and submit Question 1
+  console.log('Answering Question 1...');
+  await page.fill('input[placeholder="Digite sua resposta técnica ou justificativa..."]', 'Use queues on Redis.');
+  await page.click('button >> text=SUBMIT');
+  await page.waitForTimeout(1000);
 
-  // Click on "BLUEPRINT" tab in the bottom navigation bar
-  console.log('Clicking on Blueprint tab in bottom nav...');
+  // Fill and submit Question 2
+  console.log('Answering Question 2...');
+  await page.fill('input[placeholder="Digite sua resposta técnica ou justificativa..."]', 'Single DB schema.');
+  await page.click('button >> text=SUBMIT');
+
+  // Wait for compiler terminal
+  console.log('Waiting for compiler terminal...');
+  await page.waitForSelector('text=COMPILING BLUEPRINT');
+  await page.screenshot({ path: path.join(artifactDir, 'mobile_compiling.png') });
+
+  // Wait for dashboard translation
+  console.log('Waiting for main dashboard...');
+  await page.waitForSelector('text=COGNITIVE WORKSPACE PROFILE', { timeout: 15000 });
+  await page.screenshot({ path: path.join(artifactDir, 'mobile_dashboard.png') });
+
+  // Click on "BLUEPRINT" tab in bottom nav
+  console.log('Navigating to Blueprint tab...');
   await page.locator('.mobile-bottom-nav button >> text=BLUEPRINT').click();
   await page.waitForTimeout(1000);
-  const blueprintPath = path.join(artifactDir, 'mobile_blueprint.png');
-  console.log(`Taking mobile screenshot of blueprint schematic to ${blueprintPath}...`);
-  await page.screenshot({ path: blueprintPath });
+  await page.screenshot({ path: path.join(artifactDir, 'mobile_blueprint.png') });
 
-  // Click on "AUDIT" tab in the bottom navigation bar
-  console.log('Clicking on Audit tab in bottom nav...');
+  // Click on "AUDIT" tab in bottom nav
+  console.log('Navigating to Audit tab...');
   await page.locator('.mobile-bottom-nav button >> text=AUDIT').click();
   await page.waitForTimeout(1000);
-  const auditPath = path.join(artifactDir, 'mobile_audit.png');
-  console.log(`Taking mobile screenshot of audit dashboard to ${auditPath}...`);
-  await page.screenshot({ path: auditPath });
+  await page.screenshot({ path: path.join(artifactDir, 'mobile_audit.png') });
+
+  // Click on "ASSETS" tab in bottom nav
+  console.log('Navigating to Assets tab...');
+  await page.locator('.mobile-bottom-nav button >> text=ASSETS').click();
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: path.join(artifactDir, 'mobile_assets.png') });
 
   console.log('Mobile Assessment finished successfully.');
   await browser.close();
