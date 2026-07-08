@@ -50,7 +50,7 @@ const path = require('path');
     
     // Wait for Maestro response to render and unlock input
     console.log('Waiting for Maestro reply to Question 1...');
-    await page.waitForSelector('.left-pane input[type="text"]:not([disabled])', { timeout: 15000 });
+    await page.waitForSelector('.left-pane input[type="text"]:not([disabled])');
 
     // Fill and submit Question 2
     console.log('Answering Question 2...');
@@ -59,7 +59,7 @@ const path = require('path');
     
     // Wait for Approve button to render
     console.log('Waiting for architecture recap approval screen...');
-    await page.waitForSelector('button:has-text("APROVAR E COMPILAR BLUEPRINT")', { timeout: 15000 });
+    await page.waitForSelector('button:has-text("APROVAR E COMPILAR BLUEPRINT")');
     
     // Capture recap screenshot
     console.log('Taking recap screenshot...');
