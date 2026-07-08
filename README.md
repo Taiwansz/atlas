@@ -46,52 +46,58 @@ Atlas was built to solve three fundamental problems:
 
 ## Architecture Overview
 
-```
-╔══════════════════════════════════════════════════════════════════════════╗
-║                        ATLAS ENGINEERING OS                              ║
-║                   "The Engineering Operating System"                     ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║                                                                          ║
-║  ┌─────────────────────────────────────────────────────────────────┐    ║
-║  │                     HUMAN INTERFACE LAYER                        │    ║
-║  │   CLI  │  IDE Plugin  │  Web Dashboard  │  API  │  Webhooks     │    ║
-║  └──────────────────────────────┬──────────────────────────────────┘    ║
-║                                 │                                        ║
-║  ┌──────────────────────────────▼──────────────────────────────────┐    ║
-║  │                  ORCHESTRATION & GOVERNANCE LAYER                │    ║
-║  │                                                                  │    ║
-║  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │    ║
-║  │  │  CONSTITUTION │  │  BLUEPRINT   │  │   AGENT ORCHESTRATOR │  │    ║
-║  │  │   ENGINE     │  │   ENGINE     │  │   (Multi-Agent Core) │  │    ║
-║  │  └──────────────┘  └──────────────┘  └──────────────────────┘  │    ║
-║  └──────────────────────────────┬──────────────────────────────────┘    ║
-║                                 │                                        ║
-║  ┌──────────────────────────────▼──────────────────────────────────┐    ║
-║  │                    INTELLIGENCE LAYER                            │    ║
-║  │                                                                  │    ║
-║  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────────┐ │    ║
-║  │  │REQUIREMENT│ │  MEMORY  │ │ DECISION │ │   AUDIT ENGINE     │ │    ║
-║  │  │DISCOVERY │ │  ENGINE  │ │  ENGINE  │ │   (Red Team +      │ │    ║
-║  │  │  ENGINE  │ │          │ │  (ADRs)  │ │    Simulation)     │ │    ║
-║  │  └──────────┘ └──────────┘ └──────────┘ └────────────────────┘ │    ║
-║  └──────────────────────────────┬──────────────────────────────────┘    ║
-║                                 │                                        ║
-║  ┌──────────────────────────────▼──────────────────────────────────┐    ║
-║  │                    KNOWLEDGE LAYER                               │    ║
-║  │                                                                  │    ║
-║  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────────┐ │    ║
-║  │  │  LIVING  │ │   MCP    │ │ENGINEERING│ │   PROJECT MEMORY   │ │    ║
-║  │  │   DOCS   │ │DISCOVERY │ │   SCORE  │ │   (Persistent      │ │    ║
-║  │  │  ENGINE  │ │  ENGINE  │ │  ENGINE  │ │    Context)        │ │    ║
-║  │  └──────────┘ └──────────┘ └──────────┘ └────────────────────┘ │    ║
-║  └──────────────────────────────┬──────────────────────────────────┘    ║
-║                                 │                                        ║
-║  ┌──────────────────────────────▼──────────────────────────────────┐    ║
-║  │                    FOUNDATION LAYER                              │    ║
-║  │                                                                  │    ║
-║  │   Vision  │  Manifesto  │  Constitution  │  Values  │ Principles │    ║
-║  └──────────────────────────────────────────────────────────────────┘    ║
-╚══════════════════════════════════════════════════════════════════════════╝
+```mermaid
+flowchart TD
+    %% Styling and Theme (Obsidian & Machined Glass theme visual representation)
+    classDef layerFill fill:#0f0f0f,stroke:#00F5FF,stroke-width:2px,color:#fff;
+    classDef nodeFill fill:#1a1a1a,stroke:#333,stroke-width:1px,color:#ddd;
+    classDef highlight fill:#1f1f1f,stroke:#10B981,stroke-width:2px,color:#fff;
+
+    subgraph HIL ["HUMAN INTERFACE LAYER"]
+        CLI["CLI (agy)"]
+        IDE["IDE Plugin"]
+        Web["Web Dashboard"]
+        API["API & Webhooks"]
+    end
+
+    subgraph OGL ["ORCHESTRATION & GOVERNANCE LAYER"]
+        Const["Constitution Engine"]
+        Blue["Blueprint Engine"]
+        Orch["Agent Orchestrator (Multi-Agent Core)"]
+    end
+
+    subgraph IL ["INTELLIGENCE LAYER"]
+        Req["Requirement Discovery Engine"]
+        Mem["Memory Engine"]
+        Dec["Decision Engine (ADRs)"]
+        Audit["Audit Engine (Red Team + Simulation)"]
+    end
+
+    subgraph KL ["KNOWLEDGE LAYER"]
+        Docs["Living Docs Engine"]
+        MCP["MCP Discovery Engine"]
+        Score["Engineering Score Engine"]
+        PMem["Project Memory"]
+    end
+
+    subgraph FL ["FOUNDATION LAYER"]
+        Vision["Vision"]
+        Manifesto["Manifesto"]
+        Constitution["Constitution"]
+        Values["Values"]
+        Principles["Principles"]
+    end
+
+    %% Flows
+    HIL --> OGL
+    OGL --> IL
+    IL --> KL
+    KL --> FL
+
+    %% Apply Styles
+    class HIL,OGL,IL,KL,FL layerFill;
+    class CLI,IDE,Web,API,Const,Blue,Orch,Req,Mem,Dec,Audit,Docs,MCP,Score,PMem,Vision,Manifesto,Constitution,Values,Principles nodeFill;
+    class Orch,Blue,Score highlight;
 ```
 
 ---
