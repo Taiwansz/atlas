@@ -416,6 +416,19 @@ export default function Page() {
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
+  // DETECT LOCAL WORKSPACE INFORMATION ON STARTUP
+  useEffect(() => {
+    fetch('/api/workspace')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.isLocal) {
+          setProjectName(data.projectName);
+          setProjectDesc(data.description);
+        }
+      })
+      .catch(err => console.log('Local Workspace API offline'));
+  }, []);
+
   // AUTO-SCROLL LOOPS
   useEffect(() => {
     if (logEndRef.current) {
@@ -614,18 +627,47 @@ export default function Page() {
           projectIdea,
           projectAnswers
         );
-        setProfile(compiled);
-        
-        // Feed initial logs in console
-        const now = new Date().toLocaleTimeString();
-        setLogs([
-          { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
-          { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiled.projectName}. Stack: ${compiled.stackLabel}`, type: 'info' },
-          { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to ${compiled.modules.length} modules.`, type: 'info' }
-        ]);
 
-        setFlowStage('dashboard');
-        setHasInitialized(true);
+        // Fetch physical files mapping & real workspace details if available
+        Promise.all([
+          fetch('/api/workspace').then(res => res.json()).catch(() => null),
+          fetch('/api/audit').then(res => res.json()).catch(() => null)
+        ]).then(([workData, auditData]) => {
+          if (workData && workData.isLocal) {
+            compiled.projectName = workData.projectName;
+            compiled.description = workData.description;
+            if (workData.modules && workData.modules.length > 0) {
+              compiled.modules = workData.modules;
+            }
+          }
+          if (auditData && auditData.physicalCode) {
+            compiled.driftPhysical = auditData.physicalCode;
+            compiled.driftFile = auditData.filePath;
+            compiled.driftContract = auditData.contractCode;
+            compiled.driftResolved = auditData.driftResolved;
+            setDriftStatus(auditData.driftStatus);
+            if (auditData.driftStatus === 'clean') {
+              setScore(1000);
+            } else {
+              setScore(820);
+            }
+          }
+        }).catch(err => {
+          console.warn('API routes bypass (local execution error):', err);
+        }).finally(() => {
+          setProfile(compiled);
+          
+          // Feed initial logs in console
+          const now = new Date().toLocaleTimeString();
+          setLogs([
+            { time: now, tag: 'SYS', text: 'Atlas Operating System online.', type: 'success' },
+            { time: now, tag: 'MAESTRO', text: `Loaded System Blueprint for ${compiled.projectName}. Stack: ${compiled.stackLabel}`, type: 'info' },
+            { time: now, tag: 'AUDIT', text: `AST Watcher daemon attached to ${compiled.modules.length} modules.`, type: 'info' }
+          ]);
+
+          setFlowStage('dashboard');
+          setHasInitialized(true);
+        });
       }
     }, 600);
   };
@@ -661,7 +703,7 @@ export default function Page() {
   };
 
   // DRIFT RESOLUTION ACTIONS
-  const resolveDrift = () => {
+  const resolveDrift = async () => {
     if (!profile) return;
     const now = new Date().toLocaleTimeString();
     
@@ -670,6 +712,19 @@ export default function Page() {
       ...prev,
       { time: now, tag: 'AUDIT', text: `Running AST refactor engine on physical file ${profile.driftFile}...`, type: 'info' }
     ]);
+
+    try {
+      const res = await fetch('/api/audit', { method: 'POST' });
+      if (res.ok) {
+        const auditRes = await fetch('/api/audit');
+        if (auditRes.ok) {
+          const auditData = await auditRes.json();
+          setProfile((prev) => prev ? { ...prev, driftPhysical: auditData.physicalCode } : null);
+        }
+      }
+    } catch (e) {
+      console.warn('API bypass for drift resolution:', e);
+    }
 
     setTimeout(() => {
       const now2 = new Date().toLocaleTimeString();
