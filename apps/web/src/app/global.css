@@ -1,0 +1,389 @@
+/* =============================================================================
+   ATLAS ENGINEERING OPERATING SYSTEM - DESIGN SYSTEM
+   THEME: INDUSTRIAL BRUTALIST & TACTICAL BLUEPRINT
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap');
+
+:root {
+  /* THEME DARK - TACTICAL RADAR CONSOLE (Default) */
+  --bg-primary: #0b0c0d;
+  --bg-secondary: #121315;
+  --bg-tertiary: #181a1d;
+  --border-color: #2e3136;
+  --border-focus: #555b64;
+  --text-primary: #e5e9f0;
+  --text-secondary: #8fbcbb;
+  --text-muted: #5e6b7c;
+  
+  /* NEON HIGHLIGHTS */
+  --accent-blue: #00d8f6;
+  --accent-green: #39ff14;
+  --accent-orange: #ff5f1f;
+  --accent-red: #ff3333;
+  --grid-color: rgba(30, 32, 35, 0.5);
+  
+  /* CORE LAYOUT */
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root.theme-light {
+  /* THEME LIGHT - PAPER BLUEPRINT */
+  --bg-primary: #f6f5f0;
+  --bg-secondary: #edebe4;
+  --bg-tertiary: #e3dfd5;
+  --border-color: #1a1b1d;
+  --border-focus: #4b4d52;
+  --text-primary: #111111;
+  --text-secondary: #004488;
+  --text-muted: #737880;
+  
+  /* NEON HIGHLIGHTS OVER LIGHT */
+  --accent-blue: #0A5CFF;
+  --accent-green: #0a880a;
+  --accent-orange: #d34e00;
+  --accent-red: #cc1111;
+  --grid-color: rgba(26, 27, 29, 0.08);
+}
+
+/* =============================================================================
+   BASE STYLES
+   ============================================================================= */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: border-box;
+  border-radius: 0px !important; /* STRICT BRUTALISM: NO ROUNDED CORNERS */
+}
+
+/* =============================================================================
+   TACTICAL BLUEPRINT GRID & CRT EFFECTS
+   ============================================================================= */
+
+.blueprint-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.blueprint-grid::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+/* SCANLINES & FLICKER OVERLAY */
+.crt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+  background-size: 100% 4px;
+}
+
+.crt-flicker {
+  animation: subtle-flicker 0.15s infinite;
+}
+
+@keyframes subtle-flicker {
+  0% { opacity: 0.99; }
+  50% { opacity: 1; }
+  100% { opacity: 0.985; }
+}
+
+/* =============================================================================
+   COMPONENTS
+   ============================================================================= */
+
+/* HEADER & TOOLBAR */
+.tactical-header {
+  height: 60px;
+  width: 100%;
+  border-bottom: 2px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 10;
+  position: relative;
+}
+
+/* WINDOW PANEL (BENTO RETROS) */
+.console-panel {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.console-panel.active {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 10px rgba(0, 216, 246, 0.05);
+}
+
+.panel-header {
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.panel-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* BUTTONS */
+.tactical-btn {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.tactical-btn:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-focus);
+}
+
+.tactical-btn.primary {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.tactical-btn.primary:hover {
+  background-color: rgba(0, 216, 246, 0.1);
+}
+
+.tactical-btn.success {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.tactical-btn.success:hover {
+  background-color: rgba(57, 255, 20, 0.1);
+}
+
+.tactical-btn.warning {
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+}
+
+.tactical-btn.warning:hover {
+  background-color: rgba(255, 95, 31, 0.1);
+}
+
+/* INPUTS */
+.tactical-input {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+}
+
+.tactical-input:focus {
+  border-color: var(--border-focus);
+}
+
+/* RADAR SCAN PULSE */
+.radar-display {
+  width: 100%;
+  height: 240px;
+  position: relative;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-sweep {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(from 0deg at 50% 50%, rgba(0, 216, 246, 0.15) 0deg, transparent 90deg);
+  animation: sweep 4s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-circle {
+  position: absolute;
+  border: 1px dashed var(--border-color);
+  border-radius: 50% !important; /* Exception for circular radar shapes */
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+}
+
+.radar-axis-h {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-color);
+  top: 50%;
+  left: 0;
+}
+
+.radar-axis-v {
+  position: absolute;
+  height: 100%;
+  width: 1px;
+  background-color: var(--border-color);
+  left: 50%;
+  top: 0;
+}
+
+/* CONSOLE/TERMINAL LOG LINES */
+.log-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-line {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  display: flex;
+  gap: 8px;
+}
+
+.log-time {
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.log-tag {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+
+.log-text {
+  flex: 1;
+  word-break: break-all;
+}
+
+/* HARDWARE INDICATORS & STATUSES */
+.tactical-status {
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  border: 1px solid var(--border-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-ok {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background-color: rgba(57, 255, 20, 0.05);
+}
+
+.status-warn {
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+  background-color: rgba(255, 95, 31, 0.05);
+}
+
+.status-err {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+  background-color: rgba(255, 51, 51, 0.05);
+}
+
+.status-info {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background-color: rgba(0, 216, 246, 0.05);
+}
+
+/* =============================================================================
+   SCROLLBAR STYLING
+   ============================================================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-focus);
+}

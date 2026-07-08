@@ -134,3 +134,7 @@ mlruns/
 .stylelintcache
 *.map
 !*.d.ts.map
+
+# Next.js
+.next
+out
