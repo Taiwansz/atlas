@@ -39,23 +39,29 @@ const path = require('path');
     await page.waitForSelector('text=DISCOVERY CHAT SESSION');
     await page.screenshot({ path: path.join(artifactDir, 'mobile_interview.png') });
 
-    // Wait for input to be active (Maestro ready)
-    console.log('Waiting for Maestro input field to become active...');
-    await page.waitForSelector('.left-pane input[type="text"]:not([disabled])');
+    const approveBtn = page.locator('button:has-text("APROVAR E COMPILAR BLUEPRINT")');
 
-    // Fill and submit Question 1
-    console.log('Answering Question 1...');
-    await page.fill('.left-pane input[type="text"]', 'Use queues on Redis.');
-    await page.click('button:has-text("ENVIAR")');
+    if (await approveBtn.count() === 0) {
+      console.log('Waiting for Maestro input field to become active...');
+      await page.waitForSelector('.left-pane input[type="text"]:not([disabled])');
+
+      // Fill and submit Question 1
+      console.log('Answering Question 1...');
+      await page.fill('.left-pane input[type="text"]', 'Use queues on Redis.');
+      await page.click('button:has-text("ENVIAR")');
+      await page.waitForTimeout(2000);
+    }
     
-    // Wait for Maestro response to render and unlock input
-    console.log('Waiting for Maestro reply to Question 1...');
-    await page.waitForSelector('.left-pane input[type="text"]:not([disabled])');
+    if (await approveBtn.count() === 0) {
+      // Wait for Maestro response to render and unlock input
+      console.log('Waiting for Maestro reply to Question 1...');
+      await page.waitForSelector('.left-pane input[type="text"]:not([disabled])');
 
-    // Fill and submit Question 2
-    console.log('Answering Question 2...');
-    await page.fill('.left-pane input[type="text"]', 'Single DB schema.');
-    await page.click('button:has-text("ENVIAR")');
+      // Fill and submit Question 2
+      console.log('Answering Question 2...');
+      await page.fill('.left-pane input[type="text"]', 'Single DB schema.');
+      await page.click('button:has-text("ENVIAR")');
+    }
     
     // Wait for Approve button to render
     console.log('Waiting for architecture recap approval screen...');
