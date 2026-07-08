@@ -45,6 +45,9 @@ Você DEVE retornar APENAS um objeto JSON válido que siga exatamente o seguinte
       ...(messages || [])
     ];
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
     const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -56,8 +59,10 @@ Você DEVE retornar APENAS um objeto JSON válido que siga exatamente o seguinte
         max_tokens: 1000,
         temperature: 0.15,
         messages: chatMessages
-      })
+      }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.json();
