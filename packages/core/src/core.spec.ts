@@ -4,6 +4,8 @@ import { WinstonLogger } from './logging/logger';
 import { InMemoryEventBus } from './events/event-bus';
 import { IEventEnvelope } from './events/event.interface';
 import { ConfigurationException, ConstitutionViolationException } from './errors/errors';
+import { LocalFeatureFlagService } from './feature-flags/feature-flags';
+
 
 describe('Atlas Core Module', () => {
   beforeEach(() => {
@@ -101,6 +103,28 @@ describe('Atlas Core Module', () => {
       expect(error.code).toBe('ATLAS_CONSTITUTION_VIOLATION');
       expect(error.invariantId).toBe('II.3');
       expect(error.message).toContain('II.3');
+    });
+  });
+
+  describe('LocalFeatureFlagService', () => {
+    it('should resolve flags from initial configurations', async () => {
+      const logger = new WinstonLogger('test-flags', 'error');
+      const ffService = new LocalFeatureFlagService(logger, { 'auth.v2': true, 'billing.legacy': false });
+
+      expect(await ffService.isEnabled('auth.v2')).toBe(true);
+      expect(await ffService.isEnabled('billing.legacy')).toBe(false);
+      expect(await ffService.isEnabled('unknown-flag')).toBe(false);
+    });
+
+    it('should override configured flags with environment variables', async () => {
+      const logger = new WinstonLogger('test-flags', 'error');
+      const ffService = new LocalFeatureFlagService(logger, { 'auth.v2': false });
+
+      process.env.FEATURE_FLAG_AUTH_V2 = 'true';
+      expect(await ffService.isEnabled('auth.v2')).toBe(true);
+
+      delete process.env.FEATURE_FLAG_AUTH_V2;
+      expect(await ffService.isEnabled('auth.v2')).toBe(false);
     });
   });
 });

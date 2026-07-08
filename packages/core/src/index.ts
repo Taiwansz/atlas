@@ -8,3 +8,6 @@ export * from './events/event.interface';
 export * from './events/event-bus';
 export * from './ai/ai-provider.interface';
 export * from './di/container';
+export * from './feature-flags/feature-flags.interface';
+export * from './feature-flags/feature-flags';
+
