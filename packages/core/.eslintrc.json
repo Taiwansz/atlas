@@ -1,0 +1,20 @@
+{
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": [
+    "!**/*",
+    "node_modules/**/*",
+    "dist/**/*",
+    "jest.config.ts"
+  ],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "@typescript-eslint/no-extraneous-class": [
+          "error",
+          { "allowStaticOnly": true }
+        ]
+      }
+    }
+  ]
+}

@@ -1,12 +1,12 @@
 import * as winston from 'winston';
-import { ILogger } from './logger.interface';
+import type { ILogger } from './logger.interface';
 import { trace, context } from '@opentelemetry/api';
 
 export class WinstonLogger implements ILogger {
   private readonly logger: winston.Logger;
   private readonly serviceName: string;
 
-  constructor(serviceName: string, level: string = 'info') {
+  constructor(serviceName: string, level = 'info') {
     this.serviceName = serviceName;
     this.logger = winston.createLogger({
       level: level,
@@ -36,19 +36,19 @@ export class WinstonLogger implements ILogger {
     };
   }
 
-  public debug(message: string, ctx?: Record<string, any>): void {
+  public debug(message: string, ctx?: Record<string, unknown>): void {
     this.logger.debug(message, { ...this.getTraceContext(), context: ctx });
   }
 
-  public info(message: string, ctx?: Record<string, any>): void {
+  public info(message: string, ctx?: Record<string, unknown>): void {
     this.logger.info(message, { ...this.getTraceContext(), context: ctx });
   }
 
-  public warn(message: string, ctx?: Record<string, any>): void {
+  public warn(message: string, ctx?: Record<string, unknown>): void {
     this.logger.warn(message, { ...this.getTraceContext(), context: ctx });
   }
 
-  public error(message: string, error?: Error, ctx?: Record<string, any>): void {
+  public error(message: string, error?: Error, ctx?: Record<string, unknown>): void {
     this.logger.error(message, {
       ...this.getTraceContext(),
       error: error

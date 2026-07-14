@@ -125,6 +125,8 @@ RFCs specify Atlas protocols, formats, and systems in detail.
 |----------|-------------|
 | [Competitive Analysis](../research/state-of-art/COMPETITIVE_ANALYSIS.md) | Competitor analysis |
 | [AI Landscape 2026](../research/state-of-art/AI_LANDSCAPE_2026.md) | AI ecosystem analysis |
+| [Atlas Skills Landscape](../research/skills/ATLAS_SKILLS_LANDSCAPE.md) | Ranked research of 50 reusable skills, MCP adapters, and workflows |
+| [Atlas Skills Catalog](../research/skills/ATLAS_SKILLS_CATALOG.json) | Machine-readable catalog and 15-skill Atlas shortlist |
 | [Architectural Audit](research/ARCHITECTURAL_AUDIT.md) | Comprehensive foundation audit |
 
 ---

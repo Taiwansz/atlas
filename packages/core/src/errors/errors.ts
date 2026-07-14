@@ -2,22 +2,13 @@ export class AtlasException extends Error {
   public readonly code: string;
   public readonly timestamp: Date;
 
-  constructor(message: string, code: string = 'ATLAS_INTERNAL_ERROR') {
+  constructor(message: string, code = 'ATLAS_INTERNAL_ERROR') {
     super(message);
     this.name = this.constructor.name;
     this.code = code;
     this.timestamp = new Date();
-    Object.setPrototypeOf(this, new TargetConcreteError(this.constructor));
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-  }
-}
-
-// Utility to handle inheritance in TS error classes
-class TargetConcreteError {
-  constructor(target: any) {
-    return target.prototype;
+    Object.setPrototypeOf(this, new.target.prototype);
+    Error.captureStackTrace(this, new.target);
   }
 }
 

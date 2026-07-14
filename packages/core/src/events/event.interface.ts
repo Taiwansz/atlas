@@ -5,7 +5,7 @@ export interface IEventEnvelope {
   actorId: string; // human user ID or agent ID
   timestamp: number;
   schemaVersion: number;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
 }
 
 export interface IEventBus {

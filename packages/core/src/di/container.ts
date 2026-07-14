@@ -1,6 +1,6 @@
 export class Container {
-  private static readonly instances = new Map<string, any>();
-  private static readonly factories = new Map<string, () => any>();
+  private static readonly instances = new Map<string, unknown>();
+  private static readonly factories = new Map<string, () => unknown>();
 
   public static register<T>(token: string, instance: T): void {
     this.instances.set(token, instance);
@@ -14,8 +14,8 @@ export class Container {
     if (this.instances.has(token)) {
       return this.instances.get(token) as T;
     }
-    if (this.factories.has(token)) {
-      const factory = this.factories.get(token)!;
+    const factory = this.factories.get(token);
+    if (factory) {
       const instance = factory();
       this.instances.set(token, instance); // Cache singleton from factory
       return instance as T;

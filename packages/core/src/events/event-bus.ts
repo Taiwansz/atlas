@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
-import { IEventBus, IEventEnvelope } from './event.interface';
-import { ILogger } from '../logging/logger.interface';
+import type { IEventBus, IEventEnvelope } from './event.interface';
+import type { ILogger } from '../logging/logger.interface';
 import { EventBusException } from '../errors/errors';
 
 export class InMemoryEventBus implements IEventBus {
@@ -13,7 +13,7 @@ export class InMemoryEventBus implements IEventBus {
     this.logger = logger;
   }
 
-  public async publish(topic: string, event: IEventEnvelope): Promise<void> {
+  public publish(topic: string, event: IEventEnvelope): Promise<void> {
     this.logger.debug(`Publishing event ${event.eventType} [ID: ${event.eventId}] to topic ${topic}`, {
       topic,
       eventId: event.eventId,
@@ -25,28 +25,48 @@ export class InMemoryEventBus implements IEventBus {
       setImmediate(() => {
         this.emitter.emit(topic, event);
       });
-    } catch (err: any) {
-      this.logger.error(`Failed to publish event to topic ${topic}`, err);
-      throw new EventBusException(`Failed to publish event: ${err.message}`);
+    } catch (error: unknown) {
+      const cause = this.toError(error);
+      this.logger.error(`Failed to publish event to topic ${topic}`, cause);
+      throw new EventBusException(`Failed to publish event: ${cause.message}`);
     }
+
+    return Promise.resolve();
   }
 
-  public async subscribe(
+  public subscribe(
     topic: string,
     handler: (event: IEventEnvelope) => Promise<void>
   ): Promise<void> {
     this.logger.info(`Subscribing to topic ${topic}`);
-    
-    this.emitter.on(topic, async (event: IEventEnvelope) => {
-      try {
-        await handler(event);
-      } catch (err: any) {
-        this.logger.error(`Error processing event ${event.eventType} on topic ${topic}`, err, {
+    this.emitter.on(topic, (event: IEventEnvelope) => {
+      void this.handleEvent(topic, event, handler);
+    });
+
+    return Promise.resolve();
+  }
+
+  private async handleEvent(
+    topic: string,
+    event: IEventEnvelope,
+    handler: (event: IEventEnvelope) => Promise<void>
+  ): Promise<void> {
+    try {
+      await handler(event);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error processing event ${event.eventType} on topic ${topic}`,
+        this.toError(error),
+        {
           topic,
           eventId: event.eventId,
-        });
-        // Here we could publish to a Dead Letter Queue (DLQ) topic
-      }
-    });
+        }
+      );
+      // Here we could publish to a Dead Letter Queue (DLQ) topic
+    }
+  }
+
+  private toError(error: unknown): Error {
+    return error instanceof Error ? error : new Error(String(error));
   }
 }

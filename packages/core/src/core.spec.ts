@@ -2,7 +2,7 @@ import { ConfigManager } from './config/config';
 import { Container } from './di/container';
 import { WinstonLogger } from './logging/logger';
 import { InMemoryEventBus } from './events/event-bus';
-import { IEventEnvelope } from './events/event.interface';
+import type { IEventEnvelope } from './events/event.interface';
 import { ConfigurationException, ConstitutionViolationException } from './errors/errors';
 import { LocalFeatureFlagService } from './feature-flags/feature-flags';
 
@@ -69,7 +69,7 @@ describe('Atlas Core Module', () => {
   });
 
   describe('InMemoryEventBus', () => {
-    it('should publish events to subscribers asynchronously', (done) => {
+    it('should publish events to subscribers asynchronously', async () => {
       const logger = new WinstonLogger('test-service', 'error');
       const eventBus = new InMemoryEventBus(logger);
 
@@ -83,17 +83,27 @@ describe('Atlas Core Module', () => {
         payload: { success: true },
       };
 
-      eventBus.subscribe('test.event', async (event) => {
-        try {
-          expect(event.eventId).toBe('evt_001');
-          expect(event.payload.success).toBe(true);
-          done();
-        } catch (error) {
-          done(error);
-        }
+      const received = new Promise<void>((resolve, reject) => {
+        const rejectWithError = (error: unknown): void => {
+          reject(error instanceof Error ? error : new Error(String(error)));
+        };
+
+        void eventBus
+          .subscribe('test.event', (event) => {
+            try {
+              expect(event.eventId).toBe('evt_001');
+              expect(event.payload.success).toBe(true);
+              resolve();
+            } catch (error: unknown) {
+              rejectWithError(error);
+            }
+            return Promise.resolve();
+          })
+          .catch(rejectWithError);
       });
 
-      eventBus.publish('test.event', testEnvelope);
+      await eventBus.publish('test.event', testEnvelope);
+      await received;
     });
   });
 

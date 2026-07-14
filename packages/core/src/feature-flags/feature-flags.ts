@@ -1,5 +1,5 @@
-import { IFeatureFlagService } from './feature-flags.interface';
-import { ILogger } from '../logging/logger.interface';
+import type { IFeatureFlagService } from './feature-flags.interface';
+import type { ILogger } from '../logging/logger.interface';
 
 export class LocalFeatureFlagService implements IFeatureFlagService {
   private readonly flags: Map<string, boolean>;
@@ -10,25 +10,32 @@ export class LocalFeatureFlagService implements IFeatureFlagService {
     this.flags = new Map<string, boolean>(Object.entries(initialFlags));
   }
 
-  public async isEnabled(flagName: string, context?: Record<string, any>): Promise<boolean> {
+  public isEnabled(flagName: string, context?: Record<string, unknown>): Promise<boolean> {
     // 1. Check environment variable override: FEATURE_FLAG_FLAG_NAME
     const envKey = `FEATURE_FLAG_${flagName.toUpperCase().replace(/[-.]/g, '_')}`;
-    if (process.env[envKey] !== undefined) {
-      const val = process.env[envKey]?.toLowerCase() === 'true';
-      this.logger.debug(`Feature flag [${flagName}] resolved from env [${envKey}]: ${val}`, { flagName, context });
-      return val;
+    const envValue = process.env[envKey];
+    if (envValue !== undefined) {
+      const value = envValue.toLowerCase() === 'true';
+      this.logger.debug(
+        `Feature flag [${flagName}] resolved from env [${envKey}]: ${String(value)}`,
+        { flagName, context }
+      );
+      return Promise.resolve(value);
     }
 
     // 2. Check local map
-    if (this.flags.has(flagName)) {
-      const val = this.flags.get(flagName)!;
-      this.logger.debug(`Feature flag [${flagName}] resolved from local map: ${val}`, { flagName, context });
-      return val;
+    const configuredValue = this.flags.get(flagName);
+    if (configuredValue !== undefined) {
+      this.logger.debug(
+        `Feature flag [${flagName}] resolved from local map: ${String(configuredValue)}`,
+        { flagName, context }
+      );
+      return Promise.resolve(configuredValue);
     }
 
     // 3. Default to false
     this.logger.debug(`Feature flag [${flagName}] not found, defaulting to false`, { flagName, context });
-    return false;
+    return Promise.resolve(false);
   }
 
   public setFlag(flagName: string, value: boolean): void {

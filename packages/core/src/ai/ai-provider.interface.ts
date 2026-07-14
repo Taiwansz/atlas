@@ -24,11 +24,11 @@ export interface IModelResponse {
   content: string;
   usage: ITokenUsage;
   finishReason: 'stop' | 'length' | 'content_filter' | 'tool_calls';
-  rawResponse: any;
+  rawResponse: unknown;
 }
 
 export interface IStructuredModelRequest extends IModelRequest {
-  jsonSchema: Record<string, any>;
+  jsonSchema: Record<string, unknown>;
 }
 
 export interface IStructuredModelResponse<T> {
