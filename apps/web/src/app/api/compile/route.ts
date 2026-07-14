@@ -1,21 +1,53 @@
 import { NextResponse } from 'next/server';
+import { getAiConfig } from '../../lib/ai-config';
+import {
+  fetchWithTimeout,
+  getAssistantContent,
+  getErrorMessage,
+  getProviderError,
+  isRecord,
+  readJson,
+  requireString,
+  unwrapJsonCodeBlock,
+} from '../../lib/api-utils';
+
+interface ICompileRequest {
+  projectName: string;
+  projectStack: string;
+  projectDesc: string;
+  projectIdea: string;
+  answers: unknown;
+}
+
+function parseCompileRequest(data: unknown): ICompileRequest {
+  if (!isRecord(data)) {
+    throw new Error('Request body must be a JSON object');
+  }
+
+  return {
+    projectName: requireString(data, 'projectName'),
+    projectStack: requireString(data, 'projectStack'),
+    projectDesc: requireString(data, 'projectDesc'),
+    projectIdea: requireString(data, 'projectIdea'),
+    answers: data.answers ?? {},
+  };
+}
 
 export async function POST(request: Request) {
   try {
-    const { projectName, projectStack, projectDesc, projectIdea, answers } = await request.json();
+    const { projectName, projectStack, projectDesc, projectIdea, answers } = parseCompileRequest(
+      await readJson(request),
+    );
+    const { apiKey, model } = getAiConfig();
+    const serializedAnswers = JSON.stringify(answers);
 
-    const apiKey = process.env.NVIDIA_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'NVIDIA API Key not configured on server' }, { status: 500 });
-    }
-
-    const SYSTEM_PROMPT = `Você é o compilador cognitivo do Atlas Engineering Operating System.
+    const systemPrompt = `Você é o compilador cognitivo do Atlas Engineering Operating System.
 Sua tarefa é traduzir a especificação técnica do projeto em um Blueprint JSON estruturado de alta fidelidade para o desenvolvedor.
 
 Nome do Projeto: "${projectName}"
 Stack Técnica: "${projectStack}"
 Descrição da Ideia: "${projectDesc} / ${projectIdea}"
-Respostas de Negócio da Entrevista: ${JSON.stringify(answers || {})}
+Respostas de Negócio da Entrevista: ${serializedAnswers}
 
 Você DEVE retornar APENAS um objeto JSON válido, sem explicações extras, sem markdown e sem caixas de código (code blocks). A resposta deve ser diretamente parseável como JSON.
 
@@ -75,47 +107,39 @@ O JSON deve seguir EXATAMENTE a estrutura abaixo:
   ]
 }`;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+    const response = await fetchWithTimeout(
+      'https://integrate.api.nvidia.com/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1800,
+          temperature: 0.1,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: 'Compile o blueprint estruturado agora com os prompts de IA inclusos.',
+            },
+          ],
+        }),
       },
-      body: JSON.stringify({
-        model: 'deepseek-ai/deepseek-v4-flash',
-        max_tokens: 1800,
-        temperature: 0.1,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: 'Compile o blueprint estruturado agora com os prompts de IA inclusos.' }
-        ]
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
+      6000,
+    );
 
+    const responseBody = await readJson(response);
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || errorData.message || 'Error from NVIDIA API');
+      throw new Error(getProviderError(responseBody, 'Error from NVIDIA API'));
     }
 
-    const data = await response.json();
-    let reply = (data.choices?.[0]?.message?.content || '').trim();
-
-    // Clean up code blocks if present
-    if (reply.includes('```')) {
-      const match = reply.match(/```(?:json)?([\s\S]*?)```/);
-      if (match && match[1]) {
-        reply = match[1].trim();
-      }
-    }
-
-    const parsed = JSON.parse(reply);
+    const content = unwrapJsonCodeBlock(getAssistantContent(responseBody));
+    const parsed = JSON.parse(content) as unknown;
     return NextResponse.json(parsed);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

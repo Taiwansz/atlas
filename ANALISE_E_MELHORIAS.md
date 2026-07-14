@@ -6,6 +6,21 @@
 
 ---
 
+## Progresso de Implementação — 2026-07-13
+
+| Item | Status | Resultado |
+|---|---|---|
+| MH-001 | Implementado | URL e chave anônima do Supabase removidas do código; configuração agora é obrigatória por ambiente |
+| MH-002 | Implementado | TypeScript e ESLint reativados no build; erro JSX e configuração de testes corrigidos; exceção temporária ficou restrita ao componente legado `page.tsx` |
+| MH-003 | Implementado, validação de runtime pendente | Bootstrap PostgreSQL criado com pgvector, tabelas, índices, triggers e banco local do Keycloak; Docker não está disponível no ambiente atual |
+| MH-011 | Implementado | Modelo NVIDIA configurável por `ATLAS_AI_MODEL`; leitura e validação de respostas das APIs endurecidas |
+| MH-020 | Pesquisa concluída, implementação pendente | 50 fontes avaliadas e consolidadas em 15 capacidades Atlas com packs e carregamento seletivo |
+| MH-022 | Primeiro dogfood concluído | Sistema de estoque executável, validação Atlas-style sem drift e 12 testes; confirmou valor metodológico e ausência de automação no produto atual |
+
+O direcionamento do produto foi refinado para um MVP **agent-native**: CLI + Blueprint + Skill instalável + MCP local antes da expansão do painel web e da orquestração multiagente. Consulte `docs/ROADMAP.md` v3.0.
+
+---
+
 ## 1. O Que é o Atlas?
 
 O **Atlas Engineering OS** é um "Sistema Operacional de Engenharia" para a era da IA — uma plataforma multiagente que atua como substrato inteligente entre a intenção humana e o software em produção. Seu objetivo central é resolver a crise de **amnésia institucional** do desenvolvimento moderno de software.
@@ -350,6 +365,18 @@ const AI_MODEL = process.env.ATLAS_AI_MODEL || 'deepseek-ai/deepseek-v4-flash';
 
 O README referencia `CONTRIBUTING.md` que não existe. Documento essencial para contribuições externas.
 
+#### MH-020: Criar Skill Atlas instalável e adaptadores de agente
+
+Publicar uma skill canônica que ensine agentes a consultar Blueprint e Constituição, registrar decisões e validar mudanças. O comando `agy init --agent <adapter>` deve gerar os arquivos nativos de Codex, Claude Code e Cursor.
+
+#### MH-021: Antecipar um servidor MCP local mínimo
+
+Mover o MCP do fim do roadmap para o MVP, começando com leitura de Blueprint, validação de mudança, registro de decisão e recuperação de contexto do projeto.
+
+#### MH-022: Criar programa de dogfooding e benchmark
+
+Validar cada marco em projetos reais. O primeiro caso de referência é um sistema completo de controle de estoque, com relatório objetivo de utilidade, atritos, drift evitado e custo de contexto.
+
 ---
 
 ### PRIORIDADE BAIXA / FUTURO (Sprint 5-6+)
@@ -419,11 +446,13 @@ ORCHESTRATOR:    ░░░░░░░░░░░░░░░░░░░░   
 
 ### Próximos Passos Imediatos (Esta Semana)
 
-1. **[MH-001]** Remover credencial hardcoded do Supabase
-2. **[MH-003]** Criar `infra/docker/postgres/init.sql`
-3. **[MH-012]** Criar `CONTRIBUTING.md`
-4. **[MH-006]** Completar persistência de workspaces no Supabase
-5. **Iniciar Sprint 2:** Setup do pacote `@atlas/cli` com comandos básicos
+1. Validar **[MH-003]** em um ambiente com Docker e PostgreSQL
+2. **[MH-005]** Implementar o parser e schema do Blueprint
+3. **[MH-004]** Implementar `agy init`, `validate`, `status` e `audit`
+4. **[MH-020]** Criar a Skill Atlas canônica e o primeiro adaptador para Codex
+5. **[MH-021]** Implementar o MCP local mínimo
+6. **[MH-022]** Consolidar os achados do sistema de estoque no backlog
+7. **[MH-012]** Criar `CONTRIBUTING.md`
 
 ### Estimativa de Esforço para MVP Completo
 

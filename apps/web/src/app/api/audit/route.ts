@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { getErrorMessage } from '../../lib/api-utils';
 
 const getFilePath = () => {
   return path.resolve(process.cwd(), '../../packages/core/src/db/raw-query.ts');
 };
 
-export async function GET() {
+export function GET() {
   try {
     const filePath = getFilePath();
     
@@ -32,12 +33,12 @@ export async function GET() {
       physicalCode: fileContent,
       driftResolved: `import { supabase } from '../lib/supabase';\n\nexport class UserRepository implements IUserRepository {\n  async findById(id: string): Promise<User | null> {\n    const { data, error } = await supabase.from('users').select('*').eq('id', id).single();\n    if (error || !data) return null;\n    return data as User;\n  }\n  async save(user: User): Promise<void> {\n    await supabase.from('users').upsert(user);\n  }\n}`
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
-export async function POST() {
+export function POST() {
   try {
     const filePath = getFilePath();
     
@@ -47,7 +48,7 @@ export async function POST() {
     fs.writeFileSync(filePath, cleanResolvedCode, 'utf8');
     
     return NextResponse.json({ success: true, message: 'Drift resolved in physical file.' });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
