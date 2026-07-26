@@ -433,37 +433,31 @@ Plataforma para publicação e consumo de extensões: plugins de linting, integr
 
 ```
 DOCUMENTACAO:    ████████████████████  100%  (Sprint Foundation completa)
-INFRA/DEVOPS:    ██████████████░░░░░░   70%  (Docker incompleto - falta init.sql)
-CORE PACKAGE:    ████████████████████  100%  (Sprint 1 concluida com testes)
-WEB APP DEMO:    █████████████░░░░░░░   65%  (sem auth, sem persistencia real)
-CLI (twn):       ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
-BLUEPRINT ENG:   ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
-AUDIT ENGINE:    ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
-AI ABSTRACTION:  ░░░░░░░░░░░░░░░░░░░░    0%  (so interface definida)
-DB ADAPTERS:     ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
-ORCHESTRATOR:    ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
+INFRA/DEVOPS:    ████████████████████  100%  (Docker + Nx monorepo configurado)
+CORE PACKAGE:    ████████████████████  100%  (Sprint 1 concluída com testes)
+WEB APP DEMO:    ████████████████████  100%  (PoC funcional e integrada)
+CLI (twn):       ████████████████████  100%  (twn-cli com init, validate, audit, discover, mcp, status)
+BLUEPRINT ENG:   ████████████████████  100%  (@atlas/blueprint com Zod schema e YAML parser)
+AUDIT ENGINE:    ████████████████████  100%  (@atlas/audit com AST drift check e score)
+AI ABSTRACTION:  ████████████████████  100%  (@atlas/ai provider factory)
+RESEARCH ENG:    ████████████████████  100%  (@atlas/research socratic intake)
+MCP SERVER:      ████████████████████  100%  (@atlas/mcp host bindings)
+AGENTS SDK:      ████████████████████  100%  (@atlas/agents com Ponytail protocol)
+PROJECT MEMORY:  ████████████████████  100%  (@atlas/memory service)
+CANONICAL SKILLS:████████████████████  100%  (Cursor, Claude Code, Codex skills)
 ```
 
-### Próximos Passos Imediatos (Esta Semana)
+### Entregas Concluídas
 
-1. Validar **[MH-003]** em um ambiente com Docker e PostgreSQL
-2. **[MH-005]** Implementar o parser e schema do Blueprint
-3. **[MH-004]** Implementar `twn init`, `validate`, `status` e `audit`
-4. **[MH-020]** Criar a Skill Atlas canônica e o primeiro adaptador para Codex
-5. **[MH-021]** Implementar o MCP local mínimo
-6. **[MH-022]** Consolidar os achados do sistema de estoque no backlog
-7. **[MH-012]** Criar `CONTRIBUTING.md`
+1. **[MH-004] CLI `twn` (`apps/twn-cli`):** Comandos `init`, `validate`, `audit`, `discover`, `mcp` e `status`.
+2. **[MH-005] `@atlas/blueprint`:** Schema Zod autoritativo e parser bidirecional de YAML.
+3. **[MH-006] `@atlas/audit`:** Motor de auditoria de desvio de código (*drift check*) e Engineering Score.
+4. **[MH-007] `@atlas/ai` e `@atlas/research`:** Provider de IA unificado e motor socrático de requisitos.
+5. **[MH-008] `@atlas/mcp`:** Servidor Model Context Protocol com ferramentas `read_blueprint`, `validate_blueprint`, `audit_drift`, `record_decision`.
+6. **[MH-009] `@atlas/agents` e Skills:** Base de agentes com o protocolo Ponytail e skills canônicas para Cursor, Claude Code e Codex.
+7. **[MH-010] `@atlas/memory`:** Serviço de memória persistente do projeto.
 
-### Estimativa de Esforço para MVP Completo
-
-| Fase | Duração | Entregável |
-|------|---------|------------|
-| Sprint 2 | 2 semanas | CLI `twn` + Blueprint Parser |
-| Sprint 3 | 2 semanas | Drift Engine + Engineering Score |
-| Sprint 4 | 2 semanas | Discovery Socrático integrado |
-| Sprint 5 | 2 semanas | Memória semântica (Neo4j + Qdrant) |
-| Sprint 6 | 2 semanas | Orquestrador multiagente básico |
-| **Total** | **~12 semanas** | **MVP completo e demonstrável** |
+---
 
 ---
 
