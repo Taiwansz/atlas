@@ -1,0 +1,16 @@
+---
+description: Atlas Engineering OS Governance & Anti-Bloat Rules
+globs: *
+---
+# Atlas Engineering OS Governance Rules
+
+## 1. Blueprint First Mandate
+Always inspect `.atlas/blueprint.yaml` before making architectural or code modifications.
+
+## 2. Anti-Bloat Decision Ladder (Ponytail Protocol)
+Before generating or modifying any code, pass the request through this decision ladder:
+1. STEP 1 (YAGNI): Is this abstraction or helper strictly necessary right now? If speculative, DO NOT implement it.
+2. STEP 2 (Native First): Prefer built-in language capabilities or existing framework features over custom helper modules.
+3. STEP 3 (Single-Line Rule): If logic can be expressed clearly in 1–2 inline statements, do NOT create a dedicated helper function or file.
+4. STEP 4 (Refactor over Expansion): Modify existing files instead of spawning new files or factory structures.
+5. STEP 5 (Justification Gate): Document inline architectural justification if creating a new file is unavoidable.
