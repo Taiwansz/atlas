@@ -8,9 +8,11 @@
     "twn": "./bin/twn.js"
   },
   "dependencies": {
+    "@atlas/ai": "workspace:*",
     "@atlas/audit": "workspace:*",
     "@atlas/blueprint": "workspace:*",
     "@atlas/core": "workspace:*",
+    "@atlas/research": "workspace:*",
     "commander": "^12.1.0",
     "js-yaml": "^4.1.0",
     "zod": "^3.23.8"

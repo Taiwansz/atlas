@@ -3,6 +3,7 @@ import { handleInit } from './commands/init.command';
 import { handleValidate } from './commands/validate.command';
 import { handleStatus } from './commands/status.command';
 import { handleAudit } from './commands/audit.command';
+import { handleDiscover } from './commands/discover.command';
 
 const program = new Command();
 
@@ -19,6 +20,16 @@ program
   .option('-p, --project-path <path>', 'Override target working directory')
   .action((projectName, options) => {
     handleInit(projectName, options);
+  });
+
+program
+  .command('discover')
+  .description('Run Socratic intake interview to discover and generate a Blueprint proposal')
+  .option('-f, --feature <feature>', 'Feature intent or story description')
+  .option('-d, --domain <domain>', 'Domain or industry sector')
+  .option('-p, --project-path <path>', 'Override target working directory')
+  .action(async (options) => {
+    await handleDiscover(options);
   });
 
 program
