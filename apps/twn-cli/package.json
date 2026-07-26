@@ -12,6 +12,7 @@
     "@atlas/audit": "workspace:*",
     "@atlas/blueprint": "workspace:*",
     "@atlas/core": "workspace:*",
+    "@atlas/mcp": "workspace:*",
     "@atlas/research": "workspace:*",
     "commander": "^12.1.0",
     "js-yaml": "^4.1.0",

@@ -4,6 +4,7 @@ import { handleValidate } from './commands/validate.command';
 import { handleStatus } from './commands/status.command';
 import { handleAudit } from './commands/audit.command';
 import { handleDiscover } from './commands/discover.command';
+import { handleMCP } from './commands/mcp.command';
 
 const program = new Command();
 
@@ -48,6 +49,14 @@ program
   .option('-p, --project-path <path>', 'Override target working directory')
   .action((options) => {
     handleAudit(options);
+  });
+
+program
+  .command('mcp')
+  .description('Start or inspect Model Context Protocol (MCP) server bindings')
+  .option('-p, --project-path <path>', 'Override target working directory')
+  .action(async (options) => {
+    await handleMCP(options);
   });
 
 program
