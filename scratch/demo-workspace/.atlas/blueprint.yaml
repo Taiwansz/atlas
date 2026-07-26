@@ -1,0 +1,27 @@
+apiVersion: atlas.engineering/v1
+metadata:
+  name: meu-sistema-demo
+  version: 0.1.0
+  domain: fintech
+  description: Atlas governed workspace for fintech demo
+  owner: engineering-team
+architecture:
+  modularity: monorepo
+  primaryLanguage: TypeScript
+  framework: Next.js/Node.js
+  database: PostgreSQL
+components:
+  - id: app-web
+    name: Web Dashboard
+    type: app
+    description: Next.js administrative dashboard
+    path: apps/web
+  - id: engine-audit
+    name: Audit Engine
+    type: engine
+    description: Drift checker and score calculator
+    path: engines/audit
+constitutionRules:
+  - ruleId: CONSTITUTION-RULE-01
+    severity: CRITICAL
+    description: Blueprint Prerequisite Invariant

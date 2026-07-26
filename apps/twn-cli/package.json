@@ -10,6 +10,7 @@
   "dependencies": {
     "@atlas/ai": "workspace:*",
     "@atlas/audit": "workspace:*",
+    "@atlas/auth": "workspace:*",
     "@atlas/blueprint": "workspace:*",
     "@atlas/core": "workspace:*",
     "@atlas/mcp": "workspace:*",

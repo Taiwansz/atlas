@@ -5,6 +5,8 @@ import { handleStatus } from './commands/status.command';
 import { handleAudit } from './commands/audit.command';
 import { handleDiscover } from './commands/discover.command';
 import { handleMCP } from './commands/mcp.command';
+import { handleLogin } from './commands/login.command';
+import { handleLogout } from './commands/logout.command';
 
 const program = new Command();
 
@@ -12,6 +14,20 @@ program
   .name('twn')
   .description('Atlas Engineering Operating System CLI — Governance, Blueprint & Drift Management')
   .version('0.1.0');
+
+program
+  .command('login')
+  .description('Authenticate CLI with Atlas SaaS Cloud (Device Authorization Flow)')
+  .action(async () => {
+    await handleLogin();
+  });
+
+program
+  .command('logout')
+  .description('Log out of Atlas SaaS Cloud and remove local credentials')
+  .action(() => {
+    handleLogout();
+  });
 
 program
   .command('init [project-name]')
