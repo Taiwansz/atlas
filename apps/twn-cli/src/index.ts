@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { handleInit } from './commands/init.command';
 import { handleValidate } from './commands/validate.command';
 import { handleStatus } from './commands/status.command';
+import { handleAudit } from './commands/audit.command';
 
 const program = new Command();
 
@@ -30,6 +31,15 @@ program
   });
 
 program
+  .command('audit')
+  .description('Run complete Engineering Score audit and drift report')
+  .option('--json', 'Output report in raw JSON format')
+  .option('-p, --project-path <path>', 'Override target working directory')
+  .action((options) => {
+    handleAudit(options);
+  });
+
+program
   .command('status')
   .description('Display Atlas workspace status and component health')
   .option('-p, --project-path <path>', 'Override target working directory')
@@ -38,3 +48,4 @@ program
   });
 
 program.parse(process.argv);
+

@@ -8,6 +8,7 @@
     "twn": "./bin/twn.js"
   },
   "dependencies": {
+    "@atlas/audit": "workspace:*",
     "@atlas/blueprint": "workspace:*",
     "@atlas/core": "workspace:*",
     "commander": "^12.1.0",
