@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlas Engineering OS — SaaS Platform Preview (Liquid Glass)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       ATLAS SAAS PLATFORM — LIQUID GLASS & TASTE DESIGN SYSTEM
+       ========================================================================== */
+    :root {
+      --bg-obsidian: #080c14;
+      --bg-surface: #0f172a;
+      --accent-cyan: #00f2fe;
+      --accent-cyan-glow: rgba(0, 242, 254, 0.35);
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-violet: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-obsidian);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 65%, rgba(139, 92, 246, 0.07) 0%, transparent 45%);
+    }
+
+    /* LIQUID GLASS UTILITY CLASSES */
+    .liquid-glass {
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .liquid-glass::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+      transition: 0.6s;
+      pointer-events: none;
+    }
+
+    .liquid-glass:hover::before {
+      left: 100%;
+    }
+
+    .liquid-glass:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      box-shadow: 0 25px 60px rgba(0, 242, 254, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .glow-cyan {
+      box-shadow: 0 0 30px var(--accent-cyan-glow);
+    }
+
+    /* NAVIGATION BAR */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      margin: 1.5rem auto;
+      max-width: 1200px;
+      width: 90%;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+      color: #000;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1rem;
+      list-style: none;
+    }
+
+    .nav-tab {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .nav-tab:hover, .nav-tab.active {
+      color: var(--accent-cyan);
+      background: rgba(0, 242, 254, 0.1);
+    }
+
+    /* CONTAINER */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    /* HERO SECTION */
+    .hero {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(180deg, #ffffff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, var(--accent-cyan), #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 2.5rem auto;
+      font-weight: 400;
+    }
+
+    .cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), #00b4d8);
+      color: #040810;
+      padding: 0.85rem 1.75rem;
+      border-radius: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px var(--accent-cyan-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 242, 254, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      padding: 0.85rem 1.75rem;
+      border-radius: 10px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* TERMINAL SIMULATOR */
+    .terminal-window {
+      max-width: 850px;
+      margin: 0 auto;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+    }
+
+    .terminal-header {
+      background: rgba(15, 23, 42, 0.8);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .terminal-body {
+      padding: 1.5rem;
+      color: #e2e8f0;
+      min-height: 220px;
+    }
+
+    .prompt-line {
+      color: var(--accent-cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    .success-line {
+      color: var(--accent-emerald);
+    }
+
+    /* TAB CONTENT PANELS */
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* DASHBOARD LAYOUT */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .metric-card {
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .score-ring {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent-emerald);
+      margin: 1rem 0;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .component-list {
+      list-style: none;
+      margin-top: 1rem;
+    }
+
+    .component-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    /* PRICING GRID */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .pricing-card {
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .price {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 1rem 0;
+      color: var(--text-main);
+    }
+
+    .price span {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* DEVICE AUTH FORM */
+    .auth-card {
+      max-width: 450px;
+      margin: 3rem auto;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    .code-input {
+      width: 100%;
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      letter-spacing: 0.2em;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      border-radius: 10px;
+      color: var(--accent-cyan);
+      margin: 1.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar liquid-glass">
+    <div class="logo">
+      <span>🛡️ ATLAS OS</span>
+      <span class="logo-badge">TWN CLI v0.1</span>
+    </div>
+    <ul class="nav-links">
+      <li><button class="nav-tab active" onclick="switchTab('landing')">Landing Page</button></li>
+      <li><button class="nav-tab" onclick="switchTab('dashboard')">Dashboard Executivo</button></li>
+      <li><button class="nav-tab" onclick="switchTab('device')">CLI Login (/device)</button></li>
+      <li><button class="nav-tab" onclick="switchTab('pricing')">Preços & SaaS</button></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+
+    <!-- 1. LANDING PAGE TAB -->
+    <div id="landing" class="tab-panel active">
+      <div class="hero">
+        <div class="hero-pill liquid-glass">
+          <span>✨</span> LIQUID GLASS & PONYTAIL PROTOCOL
+        </div>
+        <h1 class="hero-title">
+          The Agent-Native<br><span>Engineering Operating System</span>
+        </h1>
+        <p class="hero-subtitle">
+          Governe assistentes de IA, elimine gambiarras com o Protocolo Ponytail e mantenha zero desvio de código com auditorias em tempo real.
+        </p>
+        <div class="cta-group">
+          <button class="btn-primary" onclick="switchTab('dashboard')">Ver Dashboard Executivo</button>
+          <button class="btn-secondary" onclick="switchTab('device')">Autenticar CLI (twn login)</button>
+        </div>
+      </div>
+
+      <!-- TERMINAL SIMULATOR -->
+      <div class="terminal-window liquid-glass glow-cyan">
+        <div class="terminal-header">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+          <span style="margin-left: 0.5rem; color: #64748b;">bash — twn cli</span>
+        </div>
+        <div class="terminal-body">
+          <div class="prompt-line">❯ twn init meu-sistema-demo --domain fintech --agent cursor</div>
+          <div class="success-line">🚀 Initializing Atlas workspace: "meu-sistema-demo"</div>
+          <div>  [+] Created .atlas/blueprint.yaml</div>
+          <div>  [+] Created .atlas/constitution.md</div>
+          <div>  [+] Installed Cursor skill: .cursor/rules/atlas.mdc</div>
+          <br>
+          <div class="prompt-line">❯ twn audit</div>
+          <div class="success-line">🛡️  Engineering Score: 100 / 100 [PASSED]</div>
+          <div>✨ Perfect Audit! Zero drift and zero violations detected.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. DASHBOARD EXECUTIVO TAB -->
+    <div id="dashboard" class="tab-panel">
+      <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">📊 Dashboard de Engenharia & Governança</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Monitoramento em tempo real do Engineering Score, desvio de arquitetura e componentes do sistema.</p>
+
+      <div class="dashboard-grid">
+        <!-- SCORE WIDGET -->
+        <div class="metric-card liquid-glass">
+          <span class="hero-pill liquid-glass">ENGINEERING SCORE</span>
+          <div class="score-ring">95 <span style="font-size: 1.2rem; color: #64748b;">/ 100</span></div>
+          <span class="status-badge">🟢 GOVERNANCE PASSED</span>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">12 Componentes Auditados com Sucesso</p>
+        </div>
+
+        <!-- COMPONENTS & DRIFT FEED -->
+        <div class="metric-card liquid-glass" style="text-align: left;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">🧩 Componentes & Estado de Drift</h3>
+          <ul class="component-list">
+            <li class="component-item">
+              <span><strong>apps/web</strong> (Next.js Dashboard)</span>
+              <span style="color: var(--accent-emerald);">🟢 0 Drift</span>
+            </li>
+            <li class="component-item">
+              <span><strong>engines/audit</strong> (AST Drift Checker)</span>
+              <span style="color: var(--accent-emerald);">🟢 0 Drift</span>
+            </li>
+            <li class="component-item">
+              <span><strong>packages/blueprint</strong> (Zod Schema Engine)</span>
+              <span style="color: var(--accent-emerald);">🟢 0 Drift</span>
+            </li>
+            <li class="component-item">
+              <span><strong>engines/research</strong> (Socratic Intake)</span>
+              <span style="color: var(--accent-amber);">🟡 Alerta Caminho Pendente</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DEVICE LOGIN TAB -->
+    <div id="device" class="tab-panel">
+      <div class="auth-card liquid-glass glow-cyan">
+        <span class="hero-pill liquid-glass">CLI AUTHENTICATION</span>
+        <h2 style="font-size: 1.75rem; font-weight: 800; margin: 1rem 0;">Conectar Terminal CLI</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Insira o código de 8 dígitos gerado pelo comando <code>twn login</code> no seu terminal.</p>
+
+        <input type="text" class="code-input" value="TWN-9A4F" readonly />
+
+        <button class="btn-primary" style="width: 100%;" onclick="alert('Dispositivo TWN-9A4F Autorizado com Sucesso! Plano Pro Ativo.')">
+          Autorizar Dispositivo CLI
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. PRICING TAB -->
+    <div id="pricing" class="tab-panel">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 2.25rem; font-weight: 800;">Planos & Assinatura SaaS</h2>
+        <p style="color: var(--text-muted);">Escolha o plano ideal para a governança de código da sua equipe.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- FREE TIER -->
+        <div class="pricing-card liquid-glass">
+          <h3 style="font-size: 1.25rem; font-weight: 700;">Grátis / Dev</h3>
+          <div class="price">R$ 0 <span>/mês</span></div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Para desenvolvedores individuais usando a CLI local.</p>
+          <button class="btn-secondary" style="width: 100%;">Usar Grátis</button>
+        </div>
+
+        <!-- PRO TIER -->
+        <div class="pricing-card liquid-glass glow-cyan" style="border-color: var(--accent-cyan);">
+          <span class="status-badge" style="margin-bottom: 0.5rem;">MAIS POPULAR</span>
+          <h3 style="font-size: 1.25rem; font-weight: 700;">Plano Pro</h3>
+          <div class="price">R$ 99 <span>/mês</span></div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Dashboard Web completo + Auditoria automática em Pull Requests.</p>
+          <button class="btn-primary" style="width: 100%;">Assinar Plano Pro</button>
+        </div>
+
+        <!-- ENTERPRISE TIER -->
+        <div class="pricing-card liquid-glass">
+          <h3 style="font-size: 1.25rem; font-weight: 700;">Enterprise</h3>
+          <div class="price">Sob Consulta</div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Projetos ilimitados, SSO/SAML, suporte dedicado e SLAs.</p>
+          <button class="btn-secondary" style="width: 100%;">Falar com Vendas</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>
