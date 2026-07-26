@@ -3,25 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atlas Engineering OS — SaaS Platform Preview (Liquid Glass)</title>
+  <title>Atlas Engineering OS — Control Surface</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* ==========================================================================
-       ATLAS SAAS PLATFORM — LIQUID GLASS & TASTE DESIGN SYSTEM
+       ATLAS DESIGN SYSTEM — HIGH-INTEGRITY METALLIC DARK MODE
+       Inspired by Thallium & TokLang Specifications
        ========================================================================== */
     :root {
-      --bg-obsidian: #080c14;
-      --bg-surface: #0f172a;
-      --accent-cyan: #00f2fe;
-      --accent-cyan-glow: rgba(0, 242, 254, 0.35);
+      --bg-canvas: #09090b;
+      --bg-surface: #121212;
+      --bg-elevated: #18181b;
+      --border-subtle: #27272a;
+      --border-active: #3f3f46;
+      
+      --ink-primary: #fafafa;
+      --ink-secondary: #a1a1aa;
+      --ink-muted: #71717a;
+      
+      --accent-gold: #d4af6a;
+      --accent-gold-deep: #b8893c;
       --accent-emerald: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-violet: #8b5cf6;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --accent-rose: #e11d48;
+      
+      --font-display: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -32,504 +40,519 @@
     }
 
     body {
-      background-color: var(--bg-obsidian);
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      min-height: 100vh;
-      overflow-x: hidden;
+      background-color: var(--bg-canvas);
+      color: var(--ink-primary);
+      font-family: var(--font-body);
       line-height: 1.5;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 65%, rgba(139, 92, 246, 0.07) 0%, transparent 45%);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* LIQUID GLASS UTILITY CLASSES */
-    .liquid-glass {
-      background: rgba(15, 23, 42, 0.55);
-      backdrop-filter: blur(24px) saturate(190%);
-      -webkit-backdrop-filter: blur(24px) saturate(190%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .liquid-glass::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-      transition: 0.6s;
-      pointer-events: none;
-    }
-
-    .liquid-glass:hover::before {
-      left: 100%;
-    }
-
-    .liquid-glass:hover {
-      border-color: rgba(0, 242, 254, 0.4);
-      box-shadow: 0 25px 60px rgba(0, 242, 254, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-      transform: translateY(-2px);
-    }
-
-    .glow-cyan {
-      box-shadow: 0 0 30px var(--accent-cyan-glow);
-    }
-
-    /* NAVIGATION BAR */
-    .navbar {
+    /* HEADER & NAVIGATION */
+    .header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.85rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 2rem;
-      margin: 1.5rem auto;
-      max-width: 1200px;
-      width: 90%;
     }
 
-    .logo {
+    .brand {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
       font-weight: 800;
-      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      color: var(--ink-primary);
+      text-transform: uppercase;
+    }
+
+    .brand-tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-gold);
+      background: rgba(212, 175, 106, 0.08);
+      border: 1px solid rgba(212, 175, 106, 0.25);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .nav-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--ink-secondary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      color: var(--ink-primary);
+      border-color: var(--border-subtle);
+      background: var(--bg-elevated);
+    }
+
+    .nav-btn.active {
+      color: var(--ink-primary);
+      background: var(--bg-elevated);
+      border-color: var(--border-active);
+    }
+
+    /* VIEWPORT CONTAINER */
+    .viewport {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    /* TYPOGRAPHY UTILITIES */
+    h1, h2, h3 {
+      font-family: var(--font-display);
       letter-spacing: -0.02em;
     }
 
-    .logo-badge {
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
-      color: #000;
-      padding: 0.2rem 0.5rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1rem;
-      list-style: none;
-    }
-
-    .nav-tab {
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      background: transparent;
-      color: var(--text-muted);
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
-    }
-
-    .nav-tab:hover, .nav-tab.active {
-      color: var(--accent-cyan);
-      background: rgba(0, 242, 254, 0.1);
-    }
-
-    /* CONTAINER */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem 1rem;
-    }
-
-    /* HERO SECTION */
-    .hero {
-      text-align: center;
-      padding: 3rem 1rem;
-    }
-
-    .hero-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 1rem;
-      border-radius: 30px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent-cyan);
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-title {
-      font-size: 3.5rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      margin-bottom: 1.25rem;
-      background: linear-gradient(180deg, #ffffff 0%, #94a3b8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-title span {
-      background: linear-gradient(135deg, var(--accent-cyan), #38bdf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-subtitle {
-      font-size: 1.15rem;
-      color: var(--text-muted);
-      max-width: 650px;
-      margin: 0 auto 2.5rem auto;
-      font-weight: 400;
-    }
-
-    .cta-group {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-bottom: 3rem;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-cyan), #00b4d8);
-      color: #040810;
-      padding: 0.85rem 1.75rem;
-      border-radius: 10px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 20px var(--accent-cyan-glow);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(0, 242, 254, 0.5);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-main);
-      padding: 0.85rem 1.75rem;
-      border-radius: 10px;
-      font-weight: 600;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.25);
-    }
-
-    /* TERMINAL SIMULATOR */
-    .terminal-window {
-      max-width: 850px;
-      margin: 0 auto;
-      text-align: left;
+    .tabular-nums {
       font-family: var(--font-mono);
-      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
     }
 
-    .terminal-header {
-      background: rgba(15, 23, 42, 0.8);
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-
-    .dot-red { background: #ef4444; }
-    .dot-yellow { background: #f59e0b; }
-    .dot-green { background: #10b981; }
-
-    .terminal-body {
-      padding: 1.5rem;
-      color: #e2e8f0;
-      min-height: 220px;
-    }
-
-    .prompt-line {
-      color: var(--accent-cyan);
-      margin-bottom: 0.5rem;
-    }
-
-    .success-line {
-      color: var(--accent-emerald);
-    }
-
-    /* TAB CONTENT PANELS */
-    .tab-panel {
+    /* TAB PANELS */
+    .panel {
       display: none;
     }
 
-    .tab-panel.active {
+    .panel.active {
       display: block;
     }
 
-    /* DASHBOARD LAYOUT */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 1.5rem;
-      margin-top: 1.5rem;
-    }
-
-    .metric-card {
-      padding: 1.5rem;
-      text-align: center;
-    }
-
-    .score-ring {
-      font-size: 2.5rem;
+    /* OVERVIEW & HERO SECTION */
+    .hero-title {
+      font-size: 2.75rem;
       font-weight: 800;
-      color: var(--accent-emerald);
-      margin: 1rem 0;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      color: var(--ink-primary);
     }
 
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
+    .hero-subtitle {
+      font-size: 1.05rem;
+      color: var(--ink-secondary);
+      max-width: 720px;
+      margin-bottom: 2rem;
+    }
+
+    /* ACTION BUTTONS */
+    .btn-primary {
+      background: var(--accent-emerald);
+      color: #09090b;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
       font-weight: 700;
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent-emerald);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
     }
 
-    .component-list {
-      list-style: none;
-      margin-top: 1rem;
+    .btn-primary:hover {
+      opacity: 0.9;
     }
 
-    .component-item {
+    .btn-outline {
+      background: transparent;
+      color: var(--ink-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border-active);
+    }
+
+    /* TERMINAL WIDGET */
+    .terminal-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      margin-top: 2rem;
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      background: var(--bg-elevated);
+      padding: 0.6rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
     }
 
-    /* PRICING GRID */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-top: 2rem;
-    }
-
-    .pricing-card {
-      padding: 2rem;
-      text-align: center;
-    }
-
-    .price {
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin: 1rem 0;
-      color: var(--text-main);
-    }
-
-    .price span {
-      font-size: 1rem;
-      color: var(--text-muted);
-      font-weight: 400;
-    }
-
-    /* DEVICE AUTH FORM */
-    .auth-card {
-      max-width: 450px;
-      margin: 3rem auto;
-      padding: 2.5rem;
-      text-align: center;
-    }
-
-    .code-input {
-      width: 100%;
-      padding: 1rem;
+    .terminal-body {
+      padding: 1.25rem;
       font-family: var(--font-mono);
-      font-size: 1.5rem;
-      letter-spacing: 0.2em;
+      font-size: 0.875rem;
+      color: var(--ink-primary);
+      background: #0d0d0f;
+      line-height: 1.7;
+    }
+
+    .cmd-prompt {
+      color: var(--accent-gold);
+    }
+
+    .cmd-success {
+      color: var(--accent-emerald);
+    }
+
+    /* METRIC CARDS & GRID */
+    .grid-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--ink-primary);
+    }
+
+    .card-meta {
+      font-size: 0.8rem;
+      color: var(--ink-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* TABLES & LEDGERS */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: var(--bg-elevated);
+      color: var(--ink-secondary);
+      font-weight: 600;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--ink-primary);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--accent-amber);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    /* CLI DEVICE FORM */
+    .form-box {
+      max-width: 480px;
+      margin: 2rem auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 2rem;
+    }
+
+    .input-field {
+      width: 100%;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      color: var(--ink-primary);
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      letter-spacing: 0.1em;
       text-align: center;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(0, 242, 254, 0.3);
-      border-radius: 10px;
-      color: var(--accent-cyan);
-      margin: 1.5rem 0;
+      margin: 1.25rem 0;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent-emerald);
     }
   </style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar liquid-glass">
-    <div class="logo">
-      <span>🛡️ ATLAS OS</span>
-      <span class="logo-badge">TWN CLI v0.1</span>
+  <!-- HEADER NAVIGATION -->
+  <header class="header">
+    <div class="brand">
+      <span class="brand-title">ATLAS ENGINEERING OS</span>
+      <span class="brand-tag">TWN CLI v0.1.0</span>
     </div>
-    <ul class="nav-links">
-      <li><button class="nav-tab active" onclick="switchTab('landing')">Landing Page</button></li>
-      <li><button class="nav-tab" onclick="switchTab('dashboard')">Dashboard Executivo</button></li>
-      <li><button class="nav-tab" onclick="switchTab('device')">CLI Login (/device)</button></li>
-      <li><button class="nav-tab" onclick="switchTab('pricing')">Preços & SaaS</button></li>
-    </ul>
-  </nav>
+    <nav class="nav-group">
+      <button class="nav-btn active" onclick="showTab('overview', this)">Visão Geral</button>
+      <button class="nav-btn" onclick="showTab('dashboard', this)">Dashboard Executivo</button>
+      <button class="nav-btn" onclick="showTab('device', this)">Autenticação CLI (/device)</button>
+      <button class="nav-btn" onclick="showTab('pricing', this)">Planos SaaS</button>
+    </nav>
+  </header>
 
-  <div class="container">
+  <main class="viewport">
 
-    <!-- 1. LANDING PAGE TAB -->
-    <div id="landing" class="tab-panel active">
-      <div class="hero">
-        <div class="hero-pill liquid-glass">
-          <span>✨</span> LIQUID GLASS & PONYTAIL PROTOCOL
-        </div>
-        <h1 class="hero-title">
-          The Agent-Native<br><span>Engineering Operating System</span>
-        </h1>
-        <p class="hero-subtitle">
-          Governe assistentes de IA, elimine gambiarras com o Protocolo Ponytail e mantenha zero desvio de código com auditorias em tempo real.
-        </p>
-        <div class="cta-group">
-          <button class="btn-primary" onclick="switchTab('dashboard')">Ver Dashboard Executivo</button>
-          <button class="btn-secondary" onclick="switchTab('device')">Autenticar CLI (twn login)</button>
-        </div>
+    <!-- PANEL 1: OVERVIEW -->
+    <section id="overview" class="panel active">
+      <h1 class="hero-title">System Governance & Architecture Control Surface</h1>
+      <p class="hero-subtitle">
+        Governança de código agent-native, validação constitucional de regras e auditoria contínua de desvio arquitetural.
+      </p>
+
+      <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <button class="btn-primary" onclick="showTab('dashboard', document.querySelectorAll('.nav-btn')[1])">Acessar Dashboard Executivo</button>
+        <button class="btn-outline" onclick="showTab('device', document.querySelectorAll('.nav-btn')[2])">Autenticar Terminal (twn login)</button>
       </div>
 
-      <!-- TERMINAL SIMULATOR -->
-      <div class="terminal-window liquid-glass glow-cyan">
+      <!-- CLI TERMINAL LOG -->
+      <div class="terminal-container">
         <div class="terminal-header">
-          <div class="dot dot-red"></div>
-          <div class="dot dot-yellow"></div>
-          <div class="dot dot-green"></div>
-          <span style="margin-left: 0.5rem; color: #64748b;">bash — twn cli</span>
+          <span>twn cli execution log</span>
+          <span>environment: local / Linux x86_64</span>
         </div>
         <div class="terminal-body">
-          <div class="prompt-line">❯ twn init meu-sistema-demo --domain fintech --agent cursor</div>
-          <div class="success-line">🚀 Initializing Atlas workspace: "meu-sistema-demo"</div>
-          <div>  [+] Created .atlas/blueprint.yaml</div>
-          <div>  [+] Created .atlas/constitution.md</div>
-          <div>  [+] Installed Cursor skill: .cursor/rules/atlas.mdc</div>
+          <div><span class="cmd-prompt">❯</span> twn init meu-sistema-demo --domain fintech --agent cursor</div>
+          <div class="cmd-success">Initialised Atlas workspace "meu-sistema-demo"</div>
+          <div>  + Created .atlas/blueprint.yaml</div>
+          <div>  + Created .atlas/constitution.md</div>
+          <div>  + Installed Cursor skill adapter (.cursor/rules/atlas.mdc)</div>
           <br>
-          <div class="prompt-line">❯ twn audit</div>
-          <div class="success-line">🛡️  Engineering Score: 100 / 100 [PASSED]</div>
-          <div>✨ Perfect Audit! Zero drift and zero violations detected.</div>
+          <div><span class="cmd-prompt">❯</span> twn audit</div>
+          <div class="cmd-success">Engineering Score: 100 / 100 [STATUS: PASSED]</div>
+          <div>Audit completed. Zero architectural drift and zero policy violations detected.</div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- 2. DASHBOARD EXECUTIVO TAB -->
-    <div id="dashboard" class="tab-panel">
-      <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">📊 Dashboard de Engenharia & Governança</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Monitoramento em tempo real do Engineering Score, desvio de arquitetura e componentes do sistema.</p>
+    <!-- PANEL 2: DASHBOARD EXECUTIVO -->
+    <section id="dashboard" class="panel">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.75rem; font-weight: 800;">Dashboard Executivo de Engenharia</h2>
+        <p style="color: var(--ink-secondary); font-size: 0.9rem;">Telemetria de integridade de arquitetura e índice de desvio de componentes.</p>
+      </div>
 
-      <div class="dashboard-grid">
-        <!-- SCORE WIDGET -->
-        <div class="metric-card liquid-glass">
-          <span class="hero-pill liquid-glass">ENGINEERING SCORE</span>
-          <div class="score-ring">95 <span style="font-size: 1.2rem; color: #64748b;">/ 100</span></div>
-          <span class="status-badge">🟢 GOVERNANCE PASSED</span>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">12 Componentes Auditados com Sucesso</p>
+      <!-- METRICS GRID -->
+      <div class="grid-metrics">
+        <div class="card">
+          <div class="card-label">Engineering Score</div>
+          <div class="card-value tabular-nums" style="color: var(--accent-emerald);">95<span style="font-size: 1rem; color: var(--ink-muted);">/100</span></div>
+          <div class="card-meta"><span class="badge badge-success">PASSED</span></div>
         </div>
 
-        <!-- COMPONENTS & DRIFT FEED -->
-        <div class="metric-card liquid-glass" style="text-align: left;">
-          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">🧩 Componentes & Estado de Drift</h3>
-          <ul class="component-list">
-            <li class="component-item">
-              <span><strong>apps/web</strong> (Next.js Dashboard)</span>
-              <span style="color: var(--accent-emerald);">🟢 0 Drift</span>
-            </li>
-            <li class="component-item">
-              <span><strong>engines/audit</strong> (AST Drift Checker)</span>
-              <span style="color: var(--accent-emerald);">🟢 0 Drift</span>
-            </li>
-            <li class="component-item">
-              <span><strong>packages/blueprint</strong> (Zod Schema Engine)</span>
-              <span style="color: var(--accent-emerald);">🟢 0 Drift</span>
-            </li>
-            <li class="component-item">
-              <span><strong>engines/research</strong> (Socratic Intake)</span>
-              <span style="color: var(--accent-amber);">🟡 Alerta Caminho Pendente</span>
-            </li>
-          </ul>
+        <div class="card">
+          <div class="card-label">Componentes Auditados</div>
+          <div class="card-value tabular-nums">12</div>
+          <div class="card-meta">Monorepo Nx / pnpm</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Alertas de Drift</div>
+          <div class="card-value tabular-nums" style="color: var(--accent-gold);">1</div>
+          <div class="card-meta">1 Alerta Médio de Caminho</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Status da Constituição</div>
+          <div class="card-value" style="font-size: 1.25rem; font-weight: 700; color: var(--accent-emerald);">CONFORMANT</div>
+          <div class="card-meta">Regra YAGNI Enforcada</div>
         </div>
       </div>
-    </div>
 
-    <!-- 3. DEVICE LOGIN TAB -->
-    <div id="device" class="tab-panel">
-      <div class="auth-card liquid-glass glow-cyan">
-        <span class="hero-pill liquid-glass">CLI AUTHENTICATION</span>
-        <h2 style="font-size: 1.75rem; font-weight: 800; margin: 1rem 0;">Conectar Terminal CLI</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">Insira o código de 8 dígitos gerado pelo comando <code>twn login</code> no seu terminal.</p>
+      <!-- COMPONENTS TABLE -->
+      <div class="table-container">
+        <div class="table-header">
+          <span style="font-weight: 700;">Componentes do Blueprint (.atlas/blueprint.yaml)</span>
+          <span class="tabular-nums" style="font-size: 0.8rem; color: var(--ink-muted);">Total: 4 Módulos</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Identificador</th>
+              <th>Nome do Componente</th>
+              <th>Tipo</th>
+              <th>Caminho Físico</th>
+              <th>Estado de Drift</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="tabular-nums">app-web</td>
+              <td>Web Dashboard Interface</td>
+              <td>app</td>
+              <td class="tabular-nums">apps/web</td>
+              <td><span class="badge badge-success">0 DRIFT</span></td>
+            </tr>
+            <tr>
+              <td class="tabular-nums">engine-audit</td>
+              <td>AST Drift Checker Engine</td>
+              <td>engine</td>
+              <td class="tabular-nums">engines/audit</td>
+              <td><span class="badge badge-success">0 DRIFT</span></td>
+            </tr>
+            <tr>
+              <td class="tabular-nums">package-blueprint</td>
+              <td>Zod Schema & Parser Engine</td>
+              <td>package</td>
+              <td class="tabular-nums">packages/blueprint</td>
+              <td><span class="badge badge-success">0 DRIFT</span></td>
+            </tr>
+            <tr>
+              <td class="tabular-nums">engine-research</td>
+              <td>Socratic Requirements Intake</td>
+              <td>engine</td>
+              <td class="tabular-nums">engines/research</td>
+              <td><span class="badge badge-warning">CAMINHO PENDENTE</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-        <input type="text" class="code-input" value="TWN-9A4F" readonly />
+    <!-- PANEL 3: CLI DEVICE AUTH -->
+    <section id="device" class="panel">
+      <div class="form-box">
+        <div class="card-label">Autenticação por Dispositivo CLI</div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; margin-top: 0.5rem;">Conectar Terminal CLI</h2>
+        <p style="color: var(--ink-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+          Insira o código de uso único gerado pelo comando <code>twn login</code> no terminal.
+        </p>
 
-        <button class="btn-primary" style="width: 100%;" onclick="alert('Dispositivo TWN-9A4F Autorizado com Sucesso! Plano Pro Ativo.')">
-          Autorizar Dispositivo CLI
+        <input type="text" class="input-field" value="TWN-9A4F" readonly />
+
+        <button class="btn-primary" style="width: 100%;" onclick="alert('Dispositivo TWN-9A4F Autorizado com Sucesso!')">
+          Autorizar Sessão CLI
         </button>
       </div>
-    </div>
+    </section>
 
-    <!-- 4. PRICING TAB -->
-    <div id="pricing" class="tab-panel">
-      <div style="text-align: center; margin-bottom: 2rem;">
-        <h2 style="font-size: 2.25rem; font-weight: 800;">Planos & Assinatura SaaS</h2>
-        <p style="color: var(--text-muted);">Escolha o plano ideal para a governança de código da sua equipe.</p>
+    <!-- PANEL 4: PRICING -->
+    <section id="pricing" class="panel">
+      <div style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; font-weight: 800;">Planos & Assinatura SaaS</h2>
+        <p style="color: var(--ink-secondary); font-size: 0.9rem;">Estrutura de precificação transparente baseada no modelo Thallium Core Ledger.</p>
       </div>
 
-      <div class="pricing-grid">
-        <!-- FREE TIER -->
-        <div class="pricing-card liquid-glass">
-          <h3 style="font-size: 1.25rem; font-weight: 700;">Grátis / Dev</h3>
-          <div class="price">R$ 0 <span>/mês</span></div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Para desenvolvedores individuais usando a CLI local.</p>
-          <button class="btn-secondary" style="width: 100%;">Usar Grátis</button>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+        <div class="card">
+          <div class="card-label">Plano Dev / Local</div>
+          <div class="card-value tabular-nums" style="font-size: 2.25rem;">R$ 0</div>
+          <p style="color: var(--ink-secondary); font-size: 0.85rem; margin: 1rem 0;">Uso ilimitado da CLI local e arquivos .atlas do repositório.</p>
+          <button class="btn-outline" style="width: 100%;">Instalar CLI Grátis</button>
         </div>
 
-        <!-- PRO TIER -->
-        <div class="pricing-card liquid-glass glow-cyan" style="border-color: var(--accent-cyan);">
-          <span class="status-badge" style="margin-bottom: 0.5rem;">MAIS POPULAR</span>
-          <h3 style="font-size: 1.25rem; font-weight: 700;">Plano Pro</h3>
-          <div class="price">R$ 99 <span>/mês</span></div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Dashboard Web completo + Auditoria automática em Pull Requests.</p>
-          <button class="btn-primary" style="width: 100%;">Assinar Plano Pro</button>
+        <div class="card" style="border-color: var(--accent-gold);">
+          <div class="card-label" style="color: var(--accent-gold);">Plano Pro (Mais Utilizado)</div>
+          <div class="card-value tabular-nums" style="font-size: 2.25rem; color: var(--accent-gold);">R$ 99 <span style="font-size: 0.9rem; color: var(--ink-muted);">/mês</span></div>
+          <p style="color: var(--ink-secondary); font-size: 0.85rem; margin: 1rem 0;">Dashboard Web completo + Auditoria automática em Pull Requests.</p>
+          <button class="btn-primary" style="width: 100%; background: var(--accent-gold); color: #09090b;">Assinar Plano Pro</button>
         </div>
 
-        <!-- ENTERPRISE TIER -->
-        <div class="pricing-card liquid-glass">
-          <h3 style="font-size: 1.25rem; font-weight: 700;">Enterprise</h3>
-          <div class="price">Sob Consulta</div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Projetos ilimitados, SSO/SAML, suporte dedicado e SLAs.</p>
-          <button class="btn-secondary" style="width: 100%;">Falar com Vendas</button>
+        <div class="card">
+          <div class="card-label">Plano Enterprise</div>
+          <div class="card-value" style="font-size: 1.75rem;">Sob Consulta</div>
+          <p style="color: var(--ink-secondary); font-size: 0.85rem; margin: 1rem 0;">Projetos ilimitados, SSO/SAML, suporte dedicado e SLAs de auditoria.</p>
+          <button class="btn-outline" style="width: 100%;">Falar com Vendas</button>
         </div>
       </div>
-    </div>
+    </section>
 
-  </div>
+  </main>
 
   <script>
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-      document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-
+    function showTab(tabId, element) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      
       document.getElementById(tabId).classList.add('active');
-      event.target.classList.add('active');
+      element.classList.add('active');
     }
   </script>
 </body>
