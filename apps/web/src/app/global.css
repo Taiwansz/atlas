@@ -1,581 +1,74 @@
-/* =============================================================================
-   ATLAS ENGINEERING OPERATING SYSTEM - DESIGN SYSTEM
-   THEME: INDUSTRIAL BRUTALIST & TACTICAL BLUEPRINT
-   ============================================================================= */
-
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap');
-
+/* ==========================================================================
+   ATLAS DESIGN SYSTEM — HIGH-INTEGRITY METALLIC DARK MODE
+   Inspired by Thallium & TokLang Specifications
+   ========================================================================== */
 :root {
-  /* THEME DARK - TACTICAL RADAR CONSOLE (Default) */
-  --bg-primary: #0b0c0d;
-  --bg-secondary: #121315;
-  --bg-tertiary: #181a1d;
-  --border-color: #2e3136;
-  --border-focus: #555b64;
-  --text-primary: #e5e9f0;
-  --text-secondary: #8fbcbb;
-  --text-muted: #5e6b7c;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --surface: #121212;
+  --elevated: #18181b;
+  --border-subtle: #27272a;
+  --border-active: #3f3f46;
   
-  /* NEON HIGHLIGHTS */
-  --accent-blue: #00d8f6;
-  --accent-green: #39ff14;
-  --accent-orange: #ff5f1f;
-  --accent-red: #ff3333;
-  --grid-color: rgba(30, 32, 35, 0.5);
+  --ink-primary: #fafafa;
+  --ink-secondary: #a1a1aa;
+  --ink-muted: #71717a;
   
-  /* CORE LAYOUT */
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --accent-gold: #d4af6a;
+  --accent-gold-deep: #b8893c;
+  --accent-emerald: #10b981;
+  --accent-rose: #e11d48;
+
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-:root.theme-light {
-  /* THEME LIGHT - PAPER BLUEPRINT */
-  --bg-primary: #f6f5f0;
-  --bg-secondary: #edebe4;
-  --bg-tertiary: #e3dfd5;
-  --border-color: #1a1b1d;
-  --border-focus: #4b4d52;
-  --text-primary: #111111;
-  --text-secondary: #004488;
-  --text-muted: #737880;
-  
-  /* NEON HIGHLIGHTS OVER LIGHT */
-  --accent-blue: #0A5CFF;
-  --accent-green: #0a880a;
-  --accent-orange: #d34e00;
-  --accent-red: #cc1111;
-  --grid-color: rgba(26, 27, 29, 0.08);
-}
-
-/* =============================================================================
-   BASE STYLES
-   ============================================================================= */
-
-html, body {
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 14px;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
   line-height: 1.5;
-  overflow: hidden;
-  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
 
-*, *:before, *:after {
-  box-sizing: border-box;
-  border-radius: 0px !important; /* STRICT BRUTALISM: NO ROUNDED CORNERS */
-}
-
-/* =============================================================================
-   TACTICAL BLUEPRINT GRID & CRT EFFECTS
-   ============================================================================= */
-
-.blueprint-grid {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  background-image: 
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-.blueprint-grid::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-  background-size: 8px 8px;
-}
-
-/* SCANLINES & FLICKER OVERLAY */
-.crt-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  pointer-events: none;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
-  background-size: 100% 4px;
-}
-
-.crt-flicker {
-  animation: subtle-flicker 0.15s infinite;
-}
-
-@keyframes subtle-flicker {
-  0% { opacity: 0.99; }
-  50% { opacity: 1; }
-  100% { opacity: 0.985; }
-}
-
-/* =============================================================================
-   COMPONENTS
-   ============================================================================= */
-
-/* HEADER & TOOLBAR */
-.tactical-header {
-  height: 60px;
-  width: 100%;
-  border-bottom: 2px solid var(--border-color);
-  background-color: var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  z-index: 10;
-  position: relative;
-}
-
-/* WINDOW PANEL (BENTO RETROS) */
-.console-panel {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  position: relative;
-}
-
-.console-panel.active {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 10px rgba(0, 216, 246, 0.05);
-}
-
-.panel-header {
-  background-color: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-}
-
-.panel-content {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-  position: relative;
-}
-
-/* BUTTONS */
-.tactical-btn {
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 6px 14px;
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
+}
+
+.badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-}
-
-.tactical-btn:hover {
-  background-color: var(--bg-tertiary);
-  border-color: var(--border-focus);
-}
-
-.tactical-btn.primary {
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
-}
-
-.tactical-btn.primary:hover {
-  background-color: rgba(0, 216, 246, 0.1);
-}
-
-.tactical-btn.success {
-  border-color: var(--accent-green);
-  color: var(--accent-green);
-}
-
-.tactical-btn.success:hover {
-  background-color: rgba(57, 255, 20, 0.1);
-}
-
-.tactical-btn.warning {
-  border-color: var(--accent-orange);
-  color: var(--accent-orange);
-}
-
-.tactical-btn.warning:hover {
-  background-color: rgba(255, 95, 31, 0.1);
-}
-
-/* INPUTS */
-.tactical-input {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 8px 12px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
   font-family: var(--font-mono);
-  font-size: 13px;
-  width: 100%;
-  outline: none;
 }
 
-.tactical-input:focus {
-  border-color: var(--border-focus);
+.badge-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
-/* RADAR SCAN PULSE */
-.radar-display {
-  width: 100%;
-  height: 240px;
-  position: relative;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.badge-gold {
+  background: rgba(212, 175, 106, 0.1);
+  color: var(--accent-gold);
+  border: 1px solid rgba(212, 175, 106, 0.25);
 }
 
-.radar-sweep {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: conic-gradient(from 0deg at 50% 50%, rgba(0, 216, 246, 0.15) 0deg, transparent 90deg);
-  animation: sweep 4s linear infinite;
-  transform-origin: center;
-}
-
-@keyframes sweep {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.radar-circle {
-  position: absolute;
-  border: 1px dashed var(--border-color);
-  border-radius: 50% !important; /* Exception for circular radar shapes */
-  transform: translate(-50%, -50%);
-  top: 50%;
-  left: 50%;
-}
-
-.radar-axis-h {
-  position: absolute;
-  width: 100%;
-  height: 1px;
-  background-color: var(--border-color);
-  top: 50%;
-  left: 0;
-}
-
-.radar-axis-v {
-  position: absolute;
-  height: 100%;
-  width: 1px;
-  background-color: var(--border-color);
-  left: 50%;
-  top: 0;
-}
-
-/* CONSOLE/TERMINAL LOG LINES */
-.log-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.log-line {
-  font-size: 12px;
-  letter-spacing: 0.5px;
-  display: flex;
-  gap: 8px;
-}
-
-.log-time {
-  color: var(--text-muted);
-  user-select: none;
-}
-
-.log-tag {
-  color: var(--text-secondary);
-  font-weight: bold;
-}
-
-.log-text {
-  flex: 1;
-  word-break: break-all;
-}
-
-/* HARDWARE INDICATORS & STATUSES */
-.tactical-status {
-  padding: 2px 6px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  border: 1px solid var(--border-color);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.status-ok {
-  border-color: var(--accent-green);
-  color: var(--accent-green);
-  background-color: rgba(57, 255, 20, 0.05);
-}
-
-.status-warn {
-  border-color: var(--accent-orange);
-  color: var(--accent-orange);
-  background-color: rgba(255, 95, 31, 0.05);
-}
-
-.status-err {
-  border-color: var(--accent-red);
-  color: var(--accent-red);
-  background-color: rgba(255, 51, 51, 0.05);
-}
-
-.status-info {
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
-  background-color: rgba(0, 216, 246, 0.05);
-}
-
-/* =============================================================================
-   SCROLLBAR STYLING
-   ============================================================================= */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-focus);
-}
-
-/* =============================================================================
-   RESPONSIVE LAYOUT CLASSES
-   ============================================================================= */
-
-.dashboard-layout {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  overflow: hidden;
-}
-
-.dashboard-sidebar {
-  border-right: 2px solid var(--border-color);
-  background-color: var(--bg-secondary);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dashboard-viewport {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.monitor-grid-container {
-  display: grid;
-  grid-template-rows: 1fr 220px;
-  height: 100%;
-}
-
-.monitor-top-row {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  border-bottom: 1px solid var(--border-color);
-  overflow: hidden;
-}
-
-.blueprint-grid-container {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  height: 100%;
-}
-
-.audit-grid-container {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  height: 100%;
-}
-
-.drift-compare-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.radar-grid-container {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  height: 100%;
-}
-
-.mobile-bottom-nav {
-  display: none;
-}
-
-/* =============================================================================
-   MOBILE MEDIA QUERY (APP STYLE)
-   ============================================================================= */
-@media (max-width: 768px) {
-  html, body {
-    font-size: 12px; /* Slightly smaller typography for compact mobile screens */
-  }
-
-  .tactical-header {
-    height: auto;
-    min-height: 50px;
-    padding: 10px 16px;
-    flex-direction: row;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .header-meta-info {
-    display: none !important; /* Hide secondary debug metadata to prevent wrapping */
-  }
-
-  .header-controls {
-    gap: 10px !important;
-  }
-
-  .tactical-btn {
-    padding: 4px 8px;
-    font-size: 10px;
-  }
-
-  .dashboard-layout {
-    grid-template-columns: 1fr;
-    height: calc(100vh - 50px);
-  }
-
-  .dashboard-sidebar {
-    display: none !important; /* Hide desktop side panel */
-  }
-
-  .dashboard-viewport {
-    height: 100%;
-    padding-bottom: 60px; /* Leave space for bottom tab navigation */
-  }
-
-  .monitor-grid-container {
-    grid-template-rows: 1fr 240px; /* Adjust terminal section height on mobile */
-  }
-
-  .monitor-top-row {
-    grid-template-columns: 1fr;
-    border-bottom: none;
-    overflow-y: auto;
-  }
-
-  .blueprint-grid-container {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-
-  .audit-grid-container {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-
-  .drift-compare-grid {
-    grid-template-columns: 1fr;
-    flex: none;
-  }
-
-  .radar-grid-container {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-
-  /* Make Blueprint SVG responsive */
-  .blueprint-grid-container svg {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 480px;
-    margin: 0 auto;
-  }
-
-  /* MOBILE TAB NAV (NATIVE APP STYLE) */
-  .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background-color: var(--bg-secondary);
-    border-top: 2px solid var(--border-color);
-    z-index: 100;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 10px;
-  }
-
-  .mobile-bottom-nav button {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: bold;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    flex: 1;
-    cursor: pointer;
-  }
-
-  .mobile-bottom-nav button.active {
-    color: var(--accent-blue);
-    background-color: var(--bg-tertiary);
-    border-top: 2px solid var(--accent-blue);
-    margin-top: -2px; /* Align border cleanly */
-  }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1.25rem;
 }
