@@ -12,9 +12,9 @@ Para validar a tese central do Atlas ("código governado por arquitetura viva"),
 
 ### 2.1 Escopo do MVP
 1. **Definição de Blueprint:** Capacidade de ler e validar sintaticamente um arquivo `atlas.blueprint.yaml`.
-2. **Auditoria de Desvio (Drift Check):** Um comando CLI (`agy validate --drift-check`) capaz de ler o diretório de um projeto TypeScript simples, inspecionar seus arquivos e comparar a Árvore de Sintaxe Abstrata (AST) física com os componentes declarados no Blueprint.
+2. **Auditoria de Desvio (Drift Check):** Um comando CLI (`twn validate --drift-check`) capaz de ler o diretório de um projeto TypeScript simples, inspecionar seus arquivos e comparar a Árvore de Sintaxe Abstrata (AST) física com os componentes declarados no Blueprint.
 3. **Cálculo de Score Básico:** Implementação parcial do motor de pontuação da [RFC-004](file:///root/atlas/docs/rfc/RFC-004-engineering-score.md), deduzindo pontos se houver drift (código sem blueprint) ou complexidade excessiva.
-4. **Interface CLI:** A estrutura base de linha de comando (`agy`) operando localmente no workspace.
+4. **Interface CLI:** A estrutura base de linha de comando (`twn`) operando localmente no workspace.
 
 ### 2.2 Justificativa de Valor vs. Complexidade
 Este MVP entrega o **maior valor perceptível** (provar que a IA não pode produzir código invisível ou desalinhado com a arquitetura) com a **menor complexidade operacional**:
@@ -44,7 +44,7 @@ A esteira de desenvolvimento do Atlas está dividida em 6 Sprints incrementais d
 * **Sprint 1: Infraestrutura Compartilhada (Atlas Core)** [ESTA SPRINT]
   * **Objetivo:** Estabelecer a fundação do monorepo, configuração unificada, injeção de dependência, logging estruturado, tracing OpenTelemetry, Event Bus em memória, tratamento de erros padrão, feature flags locais e pipelines básicos de CI/CD. Zero lógica de negócio.
 * **Sprint 2: CLI Core & Blueprint Parser**
-  * **Objetivo:** Criar a CLI base `agy` em Node/TypeScript e implementar o parser e validador sintático do `atlas.blueprint.yaml` com Zod.
+  * **Objetivo:** Criar a CLI base `twn` em Node/TypeScript e implementar o parser e validador sintático do `atlas.blueprint.yaml` com Zod.
 * **Sprint 3: Drift Check AST & Scoring Engine (Entrega do MVP)**
   * **Objetivo:** Implementar o validador de desvio (AST parser) para arquivos TypeScript locais e o motor básico de pontuação do Engineering Score (dedução por drifts).
 * **Sprint 4: Socratic Requirement Intake**

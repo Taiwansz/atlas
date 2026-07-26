@@ -59,7 +59,7 @@ flowchart TD
     classDef highlight fill:#1f1f1f,stroke:#10B981,stroke-width:2px,color:#fff;
 
     subgraph HIL ["HUMAN INTERFACE LAYER"]
-        CLI["CLI (agy)"]
+        CLI["CLI (twn)"]
         IDE["IDE Plugin"]
         Web["Web Dashboard"]
         API["API & Webhooks"]
@@ -240,7 +240,7 @@ flowchart TD
     classDef highlight fill:#1f1f1f,stroke:#10B981,stroke-width:2px,color:#fff;
 
     subgraph HIL ["HUMAN INTERFACE LAYER"]
-        CLI["CLI (agy)"]
+        CLI["CLI (twn)"]
         IDE["IDE Plugin"]
         Web["Web Dashboard"]
         API["API & Webhooks"]

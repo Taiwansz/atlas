@@ -21,7 +21,7 @@ Atlas handles highly sensitive resources, including proprietary requirements, ar
 ## Decision Drivers
 
 - **Security & Compliance:** Alignment with OIDC and OAuth2 standards, SOC2, and GDPR requirements.
-- **Integration Friction:** Seamless CLI authentications (`agy login` initiating OAuth Device Auth Flow).
+- **Integration Friction:** Seamless CLI authentications (`twn login` initiating OAuth Device Auth Flow).
 - **Maintenance Cost:** Avoiding writing and auditing custom identity management/passwords logic.
 - **Performance:** Cryptographically verified tokens with zero internal DB latency.
 
@@ -51,6 +51,6 @@ Atlas handles highly sensitive resources, including proprietary requirements, ar
 **Option 3 (Keycloak OIDC IDP)** was selected.
 
 ### Authorization Model:
-- **Authentication:** Clients use OAuth2 Authorization Code flow with PKCE (for Web Dashboard) and Device Authorization flow (for `agy` CLI). The IDP returns signed JWT access and refresh tokens.
+- **Authentication:** Clients use OAuth2 Authorization Code flow with PKCE (for Web Dashboard) and Device Authorization flow (for `twn` CLI). The IDP returns signed JWT access and refresh tokens.
 - **Service Validation:** Microservices validate JWT signatures using asymmetric keys (JWKS endpoints).
 - **Fine-Grained Access Control:** Implemented inside Atlas via RBAC roles (`org_admin`, `developer`, `security_auditor`) augmented with ABAC permissions checked at the database layer (e.g., matching user tags with blueprint security markings).

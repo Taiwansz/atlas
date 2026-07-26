@@ -28,7 +28,7 @@ We run continuous integration pipelines on every pull request targeting `main` o
 
 1. **Lint & Style Enforcement:** Verifies code formatting matches standard eslint configurations and prettier patterns.
 2. **Schema Verification:** Ensures all database migrations (PostgreSQL, Neo4j schemas) parse correctly without regression errors.
-3. **AST Drift Check:** Runs `agy validate` to verify that any code changes do not drift from the approved project blueprint.
+3. **AST Drift Check:** Runs `twn validate` to verify that any code changes do not drift from the approved project blueprint.
 4. **Test Execution:**
    - Runs unit tests for affected TS packages via Jest.
    - Runs unit tests for affected Python modules via PyTest.

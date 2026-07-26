@@ -25,7 +25,7 @@ The system is organized into five functional layers, each with distinct responsi
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     1. HUMAN INTERFACE LAYER                    │
-│   CLI (agy)  │  IDE Plugins (VS Code, Cursor)  │  Web Dashboard   │
+│   CLI (twn)  │  IDE Plugins (VS Code, Cursor)  │  Web Dashboard   │
 └────────────────────────────────┬────────────────────────────────┘
                                  │ REST / GraphQL / gRPC
                                  ▼
@@ -55,7 +55,7 @@ The system is organized into five functional layers, each with distinct responsi
 
 ### 2.1 Human Interface Layer
 Provides human-interactive boundaries. The main interfaces are:
-- **CLI (`agy`):** A Rust-based terminal tool that acts as the primary developer gateway.
+- **CLI (`twn`):** A Rust-based terminal tool that acts as the primary developer gateway.
 - **IDE Plugins:** Extensions for VS Code, Cursor, and JetBrains that overlay real-time architectural scores, ADR alerts, and requirement intake dialogues inside the editor.
 - **Web Dashboard:** A React/Next.js dashboard for visualizing project health, the Engineering Score, dependency drift, and interactive requirement graphs.
 
@@ -94,13 +94,13 @@ Atlas implements a hybrid communication architecture to balance low latency with
 
 ```mermaid
 sequenceDiagram
-    participant CLI as agy CLI
+    participant CLI as twn CLI
     participant ORCH as Agent Orchestrator
     participant BP as Blueprint Engine
     participant DB as Neo4j Graph
     participant KAF as Kafka Event Bus
 
-    CLI->>ORCH: Run "agy blueprint propose"
+    CLI->>ORCH: Run "twn blueprint propose"
     ORCH->>BP: Request Draft Generation (gRPC)
     BP->>DB: Query System Topology (gRPC)
     DB-->>BP: Return Components & Contracts

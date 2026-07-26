@@ -25,7 +25,7 @@ atlas/
 │
 ├── apps/                              # Executable end-user interfaces
 │   ├── web-dashboard/                 # Next.js 15 administration & dashboard interface
-│   └── agy-cli/                       # CLI executable wrapper (Rust/Node)
+│   └── twn-cli/                       # CLI executable wrapper (Rust/Node)
 │
 ├── engines/                           # Core Atlas computation engines (individual services)
 │   ├── requirement-discovery/         # Python service: requirement extraction & NLP

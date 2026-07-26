@@ -65,7 +65,7 @@ O Atlas adapta a complexidade da sua interface de acordo com a senioridade e o c
 ### 2.2 Persona 2: O Desenvolvedor Sênior / Arquiteto
 * **Necessidade:** Agilidade total, escape hatches para redefinir o design, ausência de ruído explicativo e controle completo de diffs de código.
 * **Jornada de Primeiro Acesso:**
-  1. Digita a ideia diretamente via CLI (`agy init --prompt "..."`).
+  1. Digita a ideia diretamente via CLI (`twn init --prompt "..."`).
   2. O Atlas gera o arquivo `atlas.blueprint.yaml`. O sênior abre o arquivo no VS Code e ajusta os contratos diretamente na sintaxe YAML.
   3. O Atlas detecta a edição no arquivo físico, recalcula o grafo de componentes instantaneamente e inicia a codificação.
 * **Interação no Dia a Dia:** Uso intenso da barra de comando (`Cmd+K`) no Console Web para alternar entre auditoria de qualidade, logs de dependência e controle de branch dos agentes.

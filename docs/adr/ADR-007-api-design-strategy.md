@@ -9,7 +9,7 @@
 
 ## Context and Problem Statement
 
-Atlas is composed of several independent services (engines) that must communicate with one another, as well as with client interfaces like the `agy` CLI, IDE plugins, and the web-based management dashboard. These communication paths have fundamentally different requirements:
+Atlas is composed of several independent services (engines) that must communicate with one another, as well as with client interfaces like the `twn` CLI, IDE plugins, and the web-based management dashboard. These communication paths have fundamentally different requirements:
 
 1. **Inter-Engine Communication:** Needs to be extremely low-latency, strongly typed, and support bidirectional streaming (e.g., streaming agent logs, source code changes, or requirements graphs).
 2. **Dashboard-to-Backend:** Requires fetching deeply nested relational graph models (e.g., visualizing requirements linked to code files, ADRs, test status, and audit records).

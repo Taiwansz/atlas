@@ -27,7 +27,7 @@ The registry operates as a secure REST API exposed through the main gateway.
 - `DELETE /v1/marketplace/plugins/{id}/versions/{version}`: Deprecate or retract a specific version (only permitted within a 72-hour window unless a security vulnerability is identified).
 
 ### 2.2 Upload Manifest Validation
-When a developer runs `agy plugin publish`, the registry validates the upload against the following checklist:
+When a developer runs `twn plugin publish`, the registry validates the upload against the following checklist:
 1. **Manifest Parsing:** Validates `atlas.plugin.json` matches the schemas described in [RFC-007](../../docs/rfc/RFC-007-plugin-system.md).
 2. **Signature Verification:** Validates the package signature against the developer's registered public key.
 3. **No Dependency Collisions:** Checks that any imported external packages do not conflict with runtime container versions.

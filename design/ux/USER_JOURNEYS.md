@@ -18,9 +18,9 @@ This document details the **8 Core User Journeys** of the Atlas Engineering OS. 
 - **Primary Persona:** *Marcus (Principal Architect) & Sarah (Tech Lead)*
 - **Trigger:** Initiating a new microservice repository.
 - **Workflow:**
-  1. Sarah runs `agy init billing-service --domain fintech` in the terminal.
+  1. Sarah runs `twn init billing-service --domain fintech` in the terminal.
   2. The CLI prompts for structural preferences (Monorepo vs. Standalone, Relational vs. Graph DB).
-  3. Sarah connects the project to the organization via `agy login`.
+  3. Sarah connects the project to the organization via `twn login`.
   4. The Constitution Engine generates a base `atlas.constitution.yaml` populated with regional regulatory compliance defaults (GDPR and PCI-DSS, due to the `fintech` domain choice).
   5. The CLI creates a base `atlas.blueprint.yaml` containing the initialized topology.
 - **Output:** Initialized `.atlas` configuration with approved base constitution and blueprint.
@@ -32,7 +32,7 @@ This document details the **8 Core User Journeys** of the Atlas Engineering OS. 
 - **Primary Persona:** *Elena (Product Manager) & Sarah (Tech Lead)*
 - **Trigger:** Initiating a new payment orchestration system.
 - **Workflow:**
-  1. Elena runs `agy discover --feature "Stripe Multi-Payouts"`.
+  1. Elena runs `twn discover --feature "Stripe Multi-Payouts"`.
   2. The Intake Engine starts a terminal-based Socratic interview, prompting Elena for:
      - Expected transactions per second.
      - Payout settlement target windows (e.g., immediate vs. batch T+2).
@@ -62,7 +62,7 @@ This document details the **8 Core User Journeys** of the Atlas Engineering OS. 
 - **Primary Persona:** *Alex (Mid-level Developer)*
 - **Trigger:** Applying the approved architecture changes to write actual source code.
 - **Workflow:**
-  1. Alex pulls the latest blueprint and runs `agy orchestrate --apply --watch` on the branch.
+  1. Alex pulls the latest blueprint and runs `twn orchestrate --apply --watch` on the branch.
   2. The Agent Orchestrator spins up:
      - **Database Agent:** Generates SQL migrations for the transaction ledger.
      - **Contract Agent:** Generates interface file definitions in TypeScript.
@@ -79,7 +79,7 @@ This document details the **8 Core User Journeys** of the Atlas Engineering OS. 
 - **Trigger:** Pre-merge CI pipeline check or local quality analysis.
 - **Workflow:**
   1. Alex submits a Pull Request.
-  2. The CI pipeline runs `agy audit`.
+  2. The CI pipeline runs `twn audit`.
   3. The Audit Engine parses the codebase AST and compares it against the locked blueprint.
   4. **Drift Detected:** Alex added a custom database connector function directly in the billing package without declaring it in the blueprint component contracts.
   5. The build fails with exit code `2` (Syntax/Schema Validation Error), blocking the merge.
@@ -108,10 +108,10 @@ This document details the **8 Core User Journeys** of the Atlas Engineering OS. 
 - **Primary Persona:** *Sarah (Tech Lead)*
 - **Trigger:** Refactoring a legacy auth system to support Keycloak SSO.
 - **Workflow:**
-  1. Sarah runs `agy evolve --from auth-v1 --to keycloak-sso`.
+  1. Sarah runs `twn evolve --from auth-v1 --to keycloak-sso`.
   2. The Evolution Engine reads the legacy auth schemas and outputs a migration roadmap.
   3. The Agent Orchestrator updates dependencies, shifts the passport middleware imports to OidcClient wrappers, and creates a data migration blueprint.
-  4. Sarah reviews the proposed changes locally and runs `agy orchestrate --apply`.
+  4. Sarah reviews the proposed changes locally and runs `twn orchestrate --apply`.
 - **Output:** Upgraded components conforming to new architectural patterns.
 
 ---
@@ -121,7 +121,7 @@ This document details the **8 Core User Journeys** of the Atlas Engineering OS. 
 - **Primary Persona:** *Vikram (Security Engineer)*
 - **Trigger:** Adding a proprietary code auditing engine to Atlas.
 - **Workflow:**
-  1. Vikram runs `agy mcp link --command "docker run -i mycorp/security-mcp"`.
+  1. Vikram runs `twn mcp link --command "docker run -i mycorp/security-mcp"`.
   2. The MCP Discovery Engine queries the container capabilities, registering standard security tools.
   3. The tools are mapped into the local `.atlas/mcp-config.json`.
   4. During subsequent audits, the Agent Orchestrator utilizes the custom container to perform security analysis.

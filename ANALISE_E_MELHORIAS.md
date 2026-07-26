@@ -132,7 +132,7 @@ modules/
 
 **Sprint 2 — CLI + Blueprint Parser:**
 - `@atlas/config` — Módulo de configuração tipada (Zod schemas)
-- `@atlas/cli` — CLI `agy` em Node.js/TypeScript com comandos `init`, `validate`, `audit`
+- `@atlas/cli` — CLI `twn` em Node.js/TypeScript com comandos `init`, `validate`, `audit`
 - `@atlas/blueprint` — Parser e validador do `atlas.blueprint.yaml`
 
 **Sprint 3 — Drift Engine + Auditoria:**
@@ -224,7 +224,7 @@ Cada sessão começa do zero. Não há fluxo de salvar/carregar workspaces no Su
 
 | Funcionalidade | Especificada em | Status |
 |----------------|-----------------|--------|
-| CLI `agy` com comandos reais | `docs/specs/CLI_SPECIFICATION.md` | Não implementado |
+| CLI `twn` com comandos reais | `docs/specs/CLI_SPECIFICATION.md` | Não implementado |
 | Drift Check via AST TypeScript | `docs/BACKLOG.md` Épico 4 | Não implementado |
 | Engineering Score Calculator | RFC-004 | Não implementado |
 | Knowledge Graph (Neo4j) | RFC-003, ADR-004 | Não implementado |
@@ -292,11 +292,11 @@ O arquivo de inicialização do PostgreSQL referenciado pelo Docker Compose prec
 Criar o pacote em `packages/cli/` com os comandos básicos:
 
 ```bash
-agy init                    # Inicializa workspace Atlas
-agy validate                # Valida blueprint.yaml
-agy validate --drift-check  # Compara AST com blueprint
-agy audit                   # Gera relatório de engineering score
-agy status                  # Status do projeto
+twn init                    # Inicializa workspace Atlas
+twn validate                # Valida blueprint.yaml
+twn validate --drift-check  # Compara AST com blueprint
+twn audit                   # Gera relatório de engineering score
+twn status                  # Status do projeto
 ```
 
 Stack sugerida: Commander.js + Chalk + Inquirer.js (Node.js/TypeScript)
@@ -367,7 +367,7 @@ O README referencia `CONTRIBUTING.md` que não existe. Documento essencial para 
 
 #### MH-020: Criar Skill Atlas instalável e adaptadores de agente
 
-Publicar uma skill canônica que ensine agentes a consultar Blueprint e Constituição, registrar decisões e validar mudanças. O comando `agy init --agent <adapter>` deve gerar os arquivos nativos de Codex, Claude Code e Cursor.
+Publicar uma skill canônica que ensine agentes a consultar Blueprint e Constituição, registrar decisões e validar mudanças. O comando `twn init --agent <adapter>` deve gerar os arquivos nativos de Codex, Claude Code e Cursor.
 
 #### MH-021: Antecipar um servidor MCP local mínimo
 
@@ -436,7 +436,7 @@ DOCUMENTACAO:    ████████████████████  1
 INFRA/DEVOPS:    ██████████████░░░░░░   70%  (Docker incompleto - falta init.sql)
 CORE PACKAGE:    ████████████████████  100%  (Sprint 1 concluida com testes)
 WEB APP DEMO:    █████████████░░░░░░░   65%  (sem auth, sem persistencia real)
-CLI (agy):       ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
+CLI (twn):       ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
 BLUEPRINT ENG:   ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
 AUDIT ENGINE:    ░░░░░░░░░░░░░░░░░░░░    0%  (nao iniciado)
 AI ABSTRACTION:  ░░░░░░░░░░░░░░░░░░░░    0%  (so interface definida)
@@ -448,7 +448,7 @@ ORCHESTRATOR:    ░░░░░░░░░░░░░░░░░░░░   
 
 1. Validar **[MH-003]** em um ambiente com Docker e PostgreSQL
 2. **[MH-005]** Implementar o parser e schema do Blueprint
-3. **[MH-004]** Implementar `agy init`, `validate`, `status` e `audit`
+3. **[MH-004]** Implementar `twn init`, `validate`, `status` e `audit`
 4. **[MH-020]** Criar a Skill Atlas canônica e o primeiro adaptador para Codex
 5. **[MH-021]** Implementar o MCP local mínimo
 6. **[MH-022]** Consolidar os achados do sistema de estoque no backlog
@@ -458,7 +458,7 @@ ORCHESTRATOR:    ░░░░░░░░░░░░░░░░░░░░   
 
 | Fase | Duração | Entregável |
 |------|---------|------------|
-| Sprint 2 | 2 semanas | CLI `agy` + Blueprint Parser |
+| Sprint 2 | 2 semanas | CLI `twn` + Blueprint Parser |
 | Sprint 3 | 2 semanas | Drift Engine + Engineering Score |
 | Sprint 4 | 2 semanas | Discovery Socrático integrado |
 | Sprint 5 | 2 semanas | Memória semântica (Neo4j + Qdrant) |

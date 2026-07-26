@@ -1,4 +1,4 @@
-# CLI Specification — agy CLI
+# CLI Specification — twn CLI
 
 > **Document Status:** Authoritative Reference  
 > **Version:** 1.0.0  
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-The `agy` CLI is the main gateway for developers interacting with the Atlas Engineering Operating System. Written in Rust for maximum startup speed, low resource consumption, and zero external dependency runtimes, `agy` runs locally on the engineer's system. It interfaces with local project files, parses configurations, runs local validation pipelines, and sends authorized commands to the Atlas cloud/on-premises gateway.
+The `twn` CLI is the main gateway for developers interacting with the Atlas Engineering Operating System. Written in Rust for maximum startup speed, low resource consumption, and zero external dependency runtimes, `twn` runs locally on the engineer's system. It interfaces with local project files, parses configurations, runs local validation pipelines, and sends authorized commands to the Atlas cloud/on-premises gateway.
 
 ---
 
@@ -17,7 +17,7 @@ The `agy` CLI is the main gateway for developers interacting with the Atlas Engi
 
 ### 2.1 Exit Codes
 
-All `agy` execution cycles conform to standard POSIX exit status conventions:
+All `twn` execution cycles conform to standard POSIX exit status conventions:
 - `0`: Success.
 - `1`: General Error (invalid commands, network timeout).
 - `2`: Syntax or schema validation error.
@@ -38,11 +38,11 @@ These flags can be appended to any command:
 
 ### 3.1 Project Lifecycle & Scaffolding
 
-#### Command: `agy init`
+#### Command: `twn init`
 Initializes a new Atlas workspace in the current directory.
 
 ```bash
-agy init [project-name] [options]
+twn init [project-name] [options]
 ```
 
 - **Options:**
@@ -53,22 +53,22 @@ agy init [project-name] [options]
   2. Generates initial `atlas.blueprint.yaml`.
   3. Prompts the user to generate a base `atlas.constitution.yaml` matching corporate compliance (e.g., GDPR, SOC2).
 
-#### Command: `agy login`
+#### Command: `twn login`
 Authenticates the CLI against the Atlas Identity Provider (Keycloak) using OAuth Device Authorization flow.
 
 ```bash
-agy login
+twn login
 ```
 
 ---
 
 ### 3.2 Requirements Intake & Discovery
 
-#### Command: `agy discover`
+#### Command: `twn discover`
 Launches the interactive, terminal-based Socratic dialogue intake session.
 
 ```bash
-agy discover --feature [name]
+twn discover --feature [name]
 ```
 
 - **Options:**
@@ -76,7 +76,7 @@ agy discover --feature [name]
   - `--import <file>`: Seed the discovery process with a PDF requirement outline, user story sheet, or PRD draft.
 - **Visual Terminal Intake Interface:**
 ```
-$ agy discover --feature "API Gateway"
+$ twn discover --feature "API Gateway"
 [?] Describe the primary users of the API Gateway (Default: internal-developers):
  > external-integrations
 [?] What is the maximum latency requirement for authorization checks?
@@ -93,11 +93,11 @@ $ agy discover --feature "API Gateway"
 
 ### 3.3 Architecture & Blueprint Management
 
-#### Command: `agy blueprint`
+#### Command: `twn blueprint`
 Validates, compiles, or proposes changes to the project blueprint.
 
 ```bash
-agy blueprint [subcommand]
+twn blueprint [subcommand]
 ```
 
 - **Subcommands:**
@@ -109,11 +109,11 @@ agy blueprint [subcommand]
 
 ### 3.4 Multi-Agent Orchestration
 
-#### Command: `agy orchestrate`
+#### Command: `twn orchestrate`
 Coordinates the Agent Orchestrator to execute implementation changes described in the approved blueprint.
 
 ```bash
-agy orchestrate --apply
+twn orchestrate --apply
 ```
 
 - **Options:**
@@ -125,22 +125,22 @@ agy orchestrate --apply
 
 ### 3.5 Auditing & Quality Metrics
 
-#### Command: `agy audit`
+#### Command: `twn audit`
 Runs the Technical Audit Engine on the local codebase.
 
 ```bash
-agy audit [options]
+twn audit [options]
 ```
 
 - **Options:**
   - `--drift-only`: Check if files or database schemas have deviated from blueprint declarations.
   - `--security`: Run dependency vulnerability analysis and look for credential leakage.
 
-#### Command: `agy score`
+#### Command: `twn score`
 Prints the current Engineering Score breakdown in the console.
 
 ```bash
-agy score
+twn score
 ```
 
 ```
@@ -160,18 +160,18 @@ Project is compliant. Build approved.
 
 ### 3.6 MCP & Extension Management
 
-#### Command: `agy mcp`
+#### Command: `twn mcp`
 Manages Model Context Protocol servers.
 
 ```bash
-agy mcp discover
+twn mcp discover
 ```
 - **Description:** Scans local environment paths for compatible MCP servers.
 - **Workflow:** Evaluates capabilities and links them to the agent config in `.atlas/mcp-config.json`.
 
-#### Command: `agy plugin`
+#### Command: `twn plugin`
 Installs or manages plugins.
 
 ```bash
-agy plugin install <plugin-id>
+twn plugin install <plugin-id>
 ```

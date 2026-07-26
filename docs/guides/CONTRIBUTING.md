@@ -61,11 +61,11 @@ When contributing a feature or system modification, you must follow the **Bluepr
 4. Run Audit ◀── 5. Run agent generation (apply) ◀── 3. Approve Blueprint
 ```
 
-1. **Requirements discovery:** Before writing code, run `agy discover --feature "Feature Name"` to gather and document constraints.
+1. **Requirements discovery:** Before writing code, run `twn discover --feature "Feature Name"` to gather and document constraints.
 2. **Blueprint Delta:** Modify `atlas.blueprint.yaml` to declare the changes to component interfaces, database schemas, or event pipelines.
 3. **Write ADRs:** If the change represents a significant design choice, generate and commit a new Architectural Decision Record in `/docs/adr/`.
-4. **Approve Blueprint:** Run `agy blueprint approve` to update the project lockfile.
-5. **Implementation & Verification:** Write source code satisfying the contracts, run local test suites, and execute `agy audit` to verify zero code drift.
+4. **Approve Blueprint:** Run `twn blueprint approve` to update the project lockfile.
+5. **Implementation & Verification:** Write source code satisfying the contracts, run local test suites, and execute `twn audit` to verify zero code drift.
 
 ---
 
@@ -74,7 +74,7 @@ When contributing a feature or system modification, you must follow the **Bluepr
 Before submitting a Pull Request (PR), ensure:
 - The CI pipeline executes successfully with zero errors.
 - Unit and integration tests cover at least 90% of the modified code blocks.
-- There is no undetected code drift (`agy validate --drift-check` returns exit code `0`).
+- There is no undetected code drift (`twn validate --drift-check` returns exit code `0`).
 - The PR description highlights:
   - The problem solved.
   - The architectural changes made.

@@ -68,7 +68,7 @@ Microservices expose a `/metrics` HTTP endpoint scraping data in standard Promet
 Trace IDs are passed along all network boundaries (Context Propagation) to enable complete request journey reconstruction.
 
 ```
-[agy CLI Request] ──(Trace: 4bf92f...)──▶ [API Gateway] ──▶ [Orchestrator]
+[twn CLI Request] ──(Trace: 4bf92f...)──▶ [API Gateway] ──▶ [Orchestrator]
                                                                 │
                                             ┌───────────────────┴───────────────────┐
                                             ▼ (gRPC)                                ▼ (Kafka Event)

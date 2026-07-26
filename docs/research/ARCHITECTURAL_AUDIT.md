@@ -41,7 +41,7 @@ We recommend **simplifying the data storage footprints, introducing a "Developer
     2. Deprecate pure JS sandboxes for backend extensions; enforce Wasm runtimes for plugins.
 
 ### 2.4 Product Manager Perspective: Usability & Non-Technical Intake
-*   **CLI Intake Barrier:** A terminal-based Socratic interview (`agy discover`) is suitable for developers, but Product Managers, legal compliance teams, and business analysts will find it frustrating.
+*   **CLI Intake Barrier:** A terminal-based Socratic interview (`twn discover`) is suitable for developers, but Product Managers, legal compliance teams, and business analysts will find it frustrating.
 *   **Blueprint Visualization:** Approving ADRs and editing Blueprints must have a visual representation. The gap between raw YAML and human-intended architecture is too wide.
 *   **Recommendation:**
     1. Accelerate the development of the Web Dashboard's visual requirements editor.
@@ -90,7 +90,7 @@ We recommend **simplifying the data storage footprints, introducing a "Developer
 Based on the audit, we prioritize improvements into three categories:
 
 ### Priority 1: High Impact, Immediate Implementation (Before Code Phase)
-1.  **Architecture Simplification (The Single-Binary Mode):** Introduce a local-first deployment profile (`agy` offline mode) using SQLite, in-memory event queues, and local JSON indexes.
+1.  **Architecture Simplification (The Single-Binary Mode):** Introduce a local-first deployment profile (`twn` offline mode) using SQLite, in-memory event queues, and local JSON indexes.
 2.  **Deterministic Invariant Checks:** Move Constitution validation out of the agent prompt and into static code analysers (AST checkers, regex pattern checkers, dependency auditors).
 3.  **Agent Loop Control:** Introduce an automatic loop-detection decorator in the Orchestrator to stop agents if they repeatedly write and revert the same file.
 

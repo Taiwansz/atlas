@@ -217,7 +217,7 @@ São criadas regras rigorosas de validação, tais como:
 Executado pelo **Audit Agent**, **Security Agent** e **Red Team Agent** ao final de cada iteração de código.
 
 #### 1. Verificação de Desvio de Design (Drift Check)
-O Audit Agent analisa recursivamente os arquivos do repositório através do comando `agy validate --drift-check` para garantir a invariante fundamental: **Nenhum código pode existir sem representação prévia no Blueprint.** Qualquer classe, endpoint ou tabela detectados no código físico que não estejam listados no Blueprint travam o build.
+O Audit Agent analisa recursivamente os arquivos do repositório através do comando `twn validate --drift-check` para garantir a invariante fundamental: **Nenhum código pode existir sem representação prévia no Blueprint.** Qualquer classe, endpoint ou tabela detectados no código físico que não estejam listados no Blueprint travam o build.
 
 #### 2. Simulações do Red Team e Segurança
 O Red Team Agent realiza ataques simulados contra o código gerado: tenta injetar payloads maliciosos em parâmetros, simula condições de concorrência (Race Conditions) e verifica o tratamento correto de erros para evitar vazamento de informações do sistema.
@@ -468,7 +468,7 @@ O Atlas possui um espaço de memória global (Global Namespace) protegido por re
 
 Uma implementação física do Atlas Cognitive System será considerada em conformidade (compliant) se, e somente se, satisfizer as seguintes asserções de engenharia:
 
-1. **Invariabilidade de Blueprint-First:** Falhar na validação do build (`agy validate`) se for detectado código executável no projeto sem uma declaração explícita em `atlas.blueprint.yaml`.
+1. **Invariabilidade de Blueprint-First:** Falhar na validação do build (`twn validate`) se for detectado código executável no projeto sem uma declaração explícita em `atlas.blueprint.yaml`.
 2. **Imutabilidade de ADRs:** Garantir que novos caminhos arquiteturais não editem arquivos de ADR antigos diretamente, mas sim adicionem novos logs arquiteturais que alterem o status dos anteriores para `Superseded` via commits rastreáveis.
 3. **Garantia de Geração ERAJ:** Emitir um erro fatal em tempo de design se qualquer decisão de classe A ou B for proposta sem a geração do payload JSON de análise estruturado ERAJ com pontuação de confiança igual ou superior a 0.85 (ou aprovação humana manual).
 4. **Isolamento de Sandbox de Spike:** Todo experimento técnico e script de prova de conceito (Spike) deve rodar obrigatoriamente sob restrições de permissões sandbox, sem acesso de escrita na raiz produtiva do repositório até sua aprovação em design.

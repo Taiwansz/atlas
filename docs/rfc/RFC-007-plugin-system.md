@@ -113,7 +113,7 @@ export interface IAgentTool {
 ### 3.4 Installation and Lifecycle Flow
 
 ```
-[User runs 'agy plugin install'] ──▶ [Verify Signature & Manifest]
+[User runs 'twn plugin install'] ──▶ [Verify Signature & Manifest]
                                                   │
                                                   ▼
 [Scan Permissions] ──▶ [User Approves Permissions] ──▶ [Load Plugin into Sandbox]

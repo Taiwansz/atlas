@@ -23,7 +23,7 @@ The architecture shifts from a heavy distributed system to a **modular, local-fi
 | **Event Broker** | Mandatory Apache Kafka | **Pluggable Event Adapter** (In-Memory default; Kafka/SQS for prod) |
 | **Constitution Guard**| LLM prompt-checks | **Static AST/Compiler Passes** (Deterministic verification) |
 | **Plugin Isolation** | Node `isolated-vm` | **WebAssembly (Wasm)** sandbox modules |
-| **Developer DX** | Multi-service local cluster | **Single Binary CLI (`agy dev`)** with embedded SQLite / Hot-reload |
+| **Developer DX** | Multi-service local cluster | **Single Binary CLI (`twn dev`)** with embedded SQLite / Hot-reload |
 | **UI Aesthetics** | Dark-mode terminal-centric | **Accessible Hybrid Theme** (Monochrome, Light/Dark, `Cmd+K` navigation) |
 
 ---
@@ -131,11 +131,11 @@ We upgrade the dashboard interface to align with the visual standard of Linear a
 
 ---
 
-## 8. Single-Binary CLI dev runtime (`agy dev`)
+## 8. Single-Binary CLI dev runtime (`twn dev`)
 
 To optimize developer onboarding, we introduce:
 ```bash
-agy dev
+twn dev
 ```
 - **Description:** Runs a local development server in a single terminal process.
 - **Workflow:** Automatically initializes an embedded SQLite database in `.atlas/local.db`, boots the Node/Python runtime handlers, and launches the hot-reloaded Web Dashboard, allowing local development within seconds.

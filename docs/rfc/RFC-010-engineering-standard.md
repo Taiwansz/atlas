@@ -22,7 +22,7 @@ Ele especifica regras para a organização do monorepo, convenções de nomencla
 O desenvolvimento acelerado por IA exige diretrizes mais rígidas do que o desenvolvimento puramente humano. Sem regras estruturais determinísticas, os modelos de linguagem geram variações inconsistentes na sintaxe, ignoram limites de camadas de software, criam acoplamentos cíclicos e subestimam a cobertura de testes. O AES resolve essa assimetria definindo um padrão técnico unificado e acionável.
 
 ### 1.2 Relação entre o Engineering Standard (Padrão) e o Engineering Score (Métrica)
-Enquanto a [RFC-004: Atlas Engineering Score](file:///root/atlas/docs/rfc/RFC-004-engineering-score.md) define as fórmulas matemáticas e sub-métricas quantitativas de pontuação do projeto (0 a 1000), este documento (AES) especifica as regras de conformidade que o código deve seguir para obter essa pontuação. Toda violação a uma regra descrita neste padrão (AES) impacta diretamente as dimensões correspondentes do Engineering Score por meio da ferramenta de auditoria estática do Atlas (`agy validate --aes`).
+Enquanto a [RFC-004: Atlas Engineering Score](file:///root/atlas/docs/rfc/RFC-004-engineering-score.md) define as fórmulas matemáticas e sub-métricas quantitativas de pontuação do projeto (0 a 1000), este documento (AES) especifica as regras de conformidade que o código deve seguir para obter essa pontuação. Toda violação a uma regra descrita neste padrão (AES) impacta diretamente as dimensões correspondentes do Engineering Score por meio da ferramenta de auditoria estática do Atlas (`twn validate --aes`).
 
 ---
 
@@ -36,7 +36,7 @@ A raiz do workspace deve seguir a topologia abaixo:
 ```
 /root/atlas/
 ├── apps/                         # Aplicações finais executáveis (ex: CLI, Web UI)
-│   ├── cli/                      # Interface de Linha de Comando (agy)
+│   ├── cli/                      # Interface de Linha de Comando (twn)
 │   └── web/                      # Console Web Administrativo (Next.js)
 ├── engines/                      # Os 15 motores lógicos independentes do Atlas
 │   ├── memory/                   # Motor de memória (RFC-003)
@@ -223,7 +223,7 @@ Para garantir consistência técnica e conformidade constante com os padrões de
 Qualquer tarefa de implementação (criada por humanos ou IAs) só poderá ser declarada como "Concluída" (Done) se cumprir integralmente os seguintes critérios objetivos:
 
 1. **Compilação sem Erros:** O código compila sem warnings e sem qualquer tipo de erro de compilação no compilador TypeScript (`tsc --noEmit`).
-2. **Drift-Check Aprovado:** A validação estática de conformidade arquitetural contra o blueprint (`agy validate --drift-check`) retorna sucesso.
+2. **Drift-Check Aprovado:** A validação estática de conformidade arquitetural contra o blueprint (`twn validate --drift-check`) retorna sucesso.
 3. **Padrão de Cobertura de Testes Atingido:**
    * Cobertura de testes unitários mínima de **85% das linhas** para arquivos criados ou modificados.
    * Cobertura de testes unitários de **100%** em módulos de autenticação, criptografia ou transações financeiras.
@@ -250,7 +250,7 @@ Este checklist representa um protocolo interno e obrigatório de metacognição 
 [ ] 5. LOGS: Confirmei se os logs estruturados emitidos contêm traceId e não expõem senhas, tokens ou dados de PII de usuários?
 [ ] 6. ERROS: Mapeei todos os possíveis erros de I/O em exceções estruturadas herdadas de AtlasException, evitando Error genérico?
 [ ] 7. ADR: Se tomei alguma decisão técnica com trade-offs, criei o respectivo ADR immutable em docs/adr/?
-[ ] 8. DRIFT-CHECK: Executei `agy validate --drift-check` localmente no workspace e obtive validação bem-sucedida?
+[ ] 8. DRIFT-CHECK: Executei `twn validate --drift-check` localmente no workspace e obtive validação bem-sucedida?
 ```
 
 *Nota: O descumprimento injustificado de qualquer um dos itens acima bloqueia automaticamente o commit no gancho de pré-commit (git pre-commit hook) gerenciado pelo Husky.*
@@ -261,10 +261,10 @@ Este checklist representa um protocolo interno e obrigatório de metacognição 
 
 O **Audit Agent** é o responsável por certificar continuamente a integridade do código contra este padrão técnico, gerando relatórios de drift e aplicando deduções no Engineering Score em caso de violação.
 
-### 8.1 Comando `agy validate`
+### 8.1 Comando `twn validate`
 Durante o processo de desenvolvimento e em pipelines de Integração Contínua (CI/CD), executa-se a auditoria com o comando:
 ```bash
-agy validate --aes --detailed
+twn validate --aes --detailed
 ```
 Este comando analisa estaticamente o código-fonte, a estrutura de pastas e a documentação técnica, cruzando as informações com as diretrizes deste documento (AES).
 
@@ -288,7 +288,7 @@ O descumprimento das regras do AES acarreta deduções diretas nas pontuações 
 
 ### 8.3 Exemplo de Estrutura do Relatório de Auditoria AES
 
-Em caso de falhas encontradas pelo comando `agy validate --aes`, o Audit Agent gera o relatório de saída `/docs/audit/aes-compliance-report.json`:
+Em caso de falhas encontradas pelo comando `twn validate --aes`, o Audit Agent gera o relatório de saída `/docs/audit/aes-compliance-report.json`:
 
 ```json
 {

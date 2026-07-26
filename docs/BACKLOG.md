@@ -9,7 +9,7 @@ Este backlog centraliza todos os requisitos de produto e tarefas de engenharia m
 * **Épico 1: Shared Core Foundation (Atlas Core) — Sprint 1**
   * Infraestrutura compartilhada do monorepo, configuração, DI, logging, tracing, event-bus, exceções e pipeline de CI/CD.
 * **Épico 2: CLI Interface & Dev Tooling — Sprint 2**
-  * Comandos CLI (`agy`), loaders, helpers e scripts de inicialização de workspace.
+  * Comandos CLI (`twn`), loaders, helpers e scripts de inicialização de workspace.
 * **Épico 3: Blueprint & Lifecycle Management — Sprint 2**
   * Parsers de YAML, validação Zod de esquemas e geração de lockfile de arquitetura.
 * **Épico 4: Compliance & Drift Inspection Engine — Sprint 3**

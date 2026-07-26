@@ -42,9 +42,9 @@ O primeiro uso do Atlas não deve exigir uma plataforma hospedada. A experiênci
 
 ```bash
 pnpm add -D @atlas/cli @atlas/skill
-pnpm exec agy init --agent codex
-pnpm exec agy validate
-pnpm exec agy audit
+pnpm exec twn init --agent codex
+pnpm exec twn validate
+pnpm exec twn audit
 ```
 
 O comando `init` deve criar, sem sobrescrever arquivos existentes:
@@ -61,7 +61,7 @@ O comando `init` deve criar, sem sobrescrever arquivos existentes:
 .cursor/rules/atlas.mdc            # quando --agent cursor
 ```
 
-Os nomes dos pacotes são nomes de trabalho e dependem de validação de disponibilidade no registry. O binário `agy` permanece como nome definido na especificação atual da CLI.
+Os nomes dos pacotes são nomes de trabalho e dependem de validação de disponibilidade no registry. O binário `twn` permanece como nome definido na especificação atual da CLI.
 
 ---
 
@@ -111,9 +111,9 @@ Os nomes dos pacotes são nomes de trabalho e dependem de validação de disponi
   - `atlas_blueprint_validate`
   - `atlas_change_check`
   - `atlas_decision_record`
-- Gerar configuração por agente via `agy init --agent <adapter>`.
+- Gerar configuração por agente via `twn init --agent <adapter>`.
 - Publicar um projeto de exemplo e um teste de instalação em repositório vazio.
-- Detectar colisões com executáveis `agy` não relacionados e falhar com diagnóstico claro; decidir o nome público definitivo antes da publicação.
+- Detectar colisões com executáveis `twn` não relacionados e falhar com diagnóstico claro; decidir o nome público definitivo antes da publicação.
 
 **Critério de sucesso:** após instalar o Atlas, um agente cria uma feature respeitando o Blueprint, registra uma decisão e recebe bloqueio ao tentar violar uma regra constitucional.
 
@@ -132,7 +132,7 @@ Os nomes dos pacotes são nomes de trabalho e dependem de validação de disponi
 - Hooks opcionais de pre-commit e gate de CI.
 - Relatório de auditoria legível por humano e estruturado para agentes.
 
-**Critério de sucesso:** `agy validate --drift-check` detecta uma dependência ou classe proibida, explica a regra violada e propõe caminhos de resolução sem alterar código automaticamente.
+**Critério de sucesso:** `twn validate --drift-check` detecta uma dependência ou classe proibida, explica a regra violada e propõe caminhos de resolução sem alterar código automaticamente.
 
 ---
 
@@ -268,6 +268,6 @@ O Atlas será avaliado por resultados de engenharia, não por volume de artefato
 
    _Mitigação:_ somente iniciar Milestone 5 depois que o loop de um único agente passar no dogfooding.
 
-7. **O binário `agy` colidir com uma ferramenta já instalada e não relacionada.**
+7. **O binário `twn` colidir com uma ferramenta já instalada e não relacionada.**
 
    _Mitigação:_ verificar identidade e versão no instalador, usar execução pelo pacote com escopo e decidir um binário público não ambíguo antes do Milestone 2.
