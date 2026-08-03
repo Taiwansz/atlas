@@ -1,9 +1,9 @@
-﻿{
-    "name":  "@atlas/blueprint",
+{
+    "name":  "@matheustwn/atlas-blueprint",
     "version":  "0.1.0",
     "type":  "commonjs",
     "dependencies":  {
-                         "@atlas/core":  "workspace:*",
+                         "@matheustwn/atlas-core":  "workspace:*",
                          "js-yaml":  "^4.1.0",
                          "zod":  "^3.23.8"
                      },

@@ -1,11 +1,11 @@
-﻿{
-    "name":  "@atlas/agents",
+{
+    "name":  "@matheustwn/atlas-agents",
     "version":  "0.1.0",
     "type":  "commonjs",
     "dependencies":  {
-                         "@atlas/ai":  "workspace:*",
-                         "@atlas/blueprint":  "workspace:*",
-                         "@atlas/core":  "workspace:*",
+                         "@matheustwn/atlas-ai":  "workspace:*",
+                         "@matheustwn/atlas-blueprint":  "workspace:*",
+                         "@matheustwn/atlas-core":  "workspace:*",
                          "zod":  "^3.23.8"
                      },
     "license":  "Apache-2.0",

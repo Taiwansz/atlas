@@ -1,9 +1,9 @@
-﻿{
-    "name":  "@atlas/memory",
+{
+    "name":  "@matheustwn/atlas-memory",
     "version":  "0.1.0",
     "type":  "commonjs",
     "dependencies":  {
-                         "@atlas/core":  "workspace:*",
+                         "@matheustwn/atlas-core":  "workspace:*",
                          "zod":  "^3.23.8"
                      },
     "license":  "Apache-2.0",
